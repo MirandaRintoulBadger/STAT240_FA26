@@ -1,2 +1,2 @@
 # STAT240_FA26
-Storage for notes, data, homework, and files related to Miranda Rintoul's STAT 240 sections
+This is the central repository where students of Miranda's FA26 STAT 240 sections can access course files, including discussion and homework assignments. This repository will be updated continually throughout the semester with new assignments, solutions, and other files.
