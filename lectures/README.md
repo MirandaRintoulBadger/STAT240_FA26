@@ -1,0 +1,1 @@
+Lecture slides and RMarkdown handouts for each chapter are found here.  When you download these files to your computer, make sure each RMarkdown file is in its own specific sub-folder (like how this Github is organized), not directly in the base `lectures` folder.
