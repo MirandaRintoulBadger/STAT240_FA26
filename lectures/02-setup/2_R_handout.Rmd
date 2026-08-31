@@ -1,0 +1,47 @@
+---
+title: 'Section 2: Class Setup'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Markdown
+
+Markdown is a lightweight markup language for creating pretty formatted text.  In the editor, it appears as plaintext. 
+
+- Can do *italicized* or **bolded** text
+- Create headings with the # symbol
+
+# Fewer hashtags = bigger
+
+### More hashtags = smaller
+
+It's best practice to separate different items in Markdown with an empty line.
+Regular line break doesn't show up in the formatted file.
+
+Here is the other component of an .Rmd, the R code chunk.
+
+```{r}
+# This is a "comment"; preceded by #
+
+# The next line of code runs a command, getwd(), 
+# which stands for "get working directory", 
+# which should be the location of this file.
+
+getwd()
+
+3 + 5
+7 - 13
+
+# What is happening in the console?
+```
+
+Exercise 2.2:
+
+```{r}
+# Write code for Exercise 2.2 here!
+
+```
+
