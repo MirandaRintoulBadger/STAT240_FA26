@@ -1,0 +1,57 @@
+---
+title: "Discussion 1"
+author: "Student's Name Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# We will usually provide a chunk like this for you. You shouldn't change this chunk until and unless you know what you are doing.
+
+# This is setting "global chunk options":
+
+#   echo = TRUE causes every chunk to appear in the knitted file.
+#   warning = FALSE causes warning messages to NOT appear in the knitted file.
+#   message = FALSE causes other messages to NOT appear in the knitted file.
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds01`.
+
+The goal of today's discussion will be to review the syllabus, think about your learning goals for STAT 240, and learn how to knit an Rmarkdown file to html.
+
+
+# Problem 1
+
+What are the dates and times for the midterm and final exam for this course? As a reminder, dates or times for the final exam are rarely offered and require extenuating or emergency circumstances.
+
+
+# Problem 2
+
+What are your goals for taking this course and what are you hoping to learn?
+
+
+# Problem 3
+
+Ensure that the `STAT240` folder on your computer is set up according to the image below.
+
+![](https://raw.githubusercontent.com/MirandaRintoulBadger/STAT240_SP26/refs/heads/main/Miranda_Lectures/02-setup/directory_setup.png)
+
+
+# Problem 4
+
+Use the following R chunk to compute three squared plus five.
+
+You may find [Section 2.3.2 of the textbook ](https://bwu62.github.io/stat240-revamp/rstudio-intro.html#r-math) helpful.
+
+```{r}
+# Write your code in here!
+
+```
+
+Finally, knit your file.  Ensure that the answer is appearing in the knitted file correctly. Do not just type the answer, write the code to get the answer.
+
+Discussion is graded based on attendance, so you are *not* required to submit anything to Canvas.
+
