@@ -1,0 +1,395 @@
+---
+title: 'Section 3: Data Types and Structures'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+## R basics
+
+```{r}
+# Initialize with <- or =, but <- is standard R style
+x <- 4
+my_favorite_number <- 8
+
+# This does not change the value of either x or my_favorite_number
+x + my_favorite_number
+
+# But if we do want to update the value:
+x <- x + 1
+```
+
+Capitalization matters!
+
+```{r}
+x
+
+X
+```
+
+```{r}
+# This is an illegal variable name
+1a <- 3
+```
+
+
+Three variable types: numeric, character, and logical.  We're familiar with numerics as a way of storing numbers.
+
+```{r}
+class(my_favorite_number)
+
+class(pi)
+```
+
+Math operations can result in `NaN`, `Inf` or `-Inf` (to avoid breaking R).
+
+```{r}
+sqrt(-4)
+0 / 0
+
+1 / 0
+
+log(0)
+```
+
+
+Character objects are a set of symbols like a name or label.  They have no mathematical or other special meaning.
+
+```{r}
+my_name <- "Miranda"
+
+class(my_name)
+```
+
+Characters don't obey numeric or logical operators.
+
+```{r}
+easy_equation <- "2 + 2"
+false_statement <- "5 < 2"
+
+easy_equation
+false_statement
+
+"2026" + 10
+```
+
+```{r}
+nchar(my_name)
+
+tolower(my_name)
+toupper(my_name)
+```
+
+Use `paste()` to combine strings.
+
+```{r}
+my_name <- "Miranda"
+my_age <- "29"
+
+paste(my_name, "is", my_age, "years old.")
+```
+
+
+The two basic types of logical objects are `TRUE` and `FALSE`.
+
+```{r}
+# Is three greater than two? Yes, so return TRUE.
+3 > 2
+
+# Is two greater than three? No, so return FALSE.
+2 > 3
+```
+
+
+## Logical operators
+
+Mathematical operators like `+` let us compute a numeric result with numeric objects. Logical operators perform a comparison.
+
+```{r}
+my_height <- 60
+
+my_height < 72
+
+my_height < 60
+```
+
+```{r}
+my_height <= 72
+my_height >= 60
+```
+
+Use `==` and `!=` to check an exact equality.  This is not the same as the `=` for assigning variables!
+
+```{r}
+my_height == 66
+my_height != 66
+```
+
+The value of `my_height` does not change.
+
+The operators `&` and `|` also perform a comparison.  Instead of comparing numbers, they compare logical statements.
+
+```{r}
+# one of these fails, so the whole "and" condition fails.
+(my_height > 72) & (my_height + 6 < 70)
+
+# one of these succeeds, so the whole "or" condition succeeds.
+(my_height > 72) | (my_height + 6 < 70)
+```
+
+
+```{r}
+TRUE & FALSE
+TRUE & TRUE
+
+TRUE | TRUE
+TRUE | FALSE
+FALSE | FALSE
+```
+
+
+`NA` is the notation for a missing value.  It doesn't work with normal operators.
+
+```{r}
+nothing <- NA
+
+nothing + 2
+nothing > 5
+nothing | TRUE
+```
+
+To check for a missing value, use `is.na`.
+
+```{r}
+# Incorrect (R can't interpret this statement):
+nothing == NA
+
+# Correct
+is.na(nothing)
+```
+
+
+## Vectors
+
+A vector is a sequence of the same type of object.  Access an item by index with `[]`.  Vectors in R are *one-indexed*.
+
+```{r}
+favorite_foods <- c("noodles", "lamb stew", "corn on the cob")
+prime_numbers <- c(2, 3, 5, 7, 11)
+
+# Notice how these variables are storing the entire sequence
+favorite_foods
+prime_numbers
+
+favorite_foods[2]
+prime_numbers[1]
+```
+
+If you try to combine different types, R will try to force the objects to be the same type.
+
+```{r}
+three_things = c(2, TRUE, "banana")
+
+three_things
+
+class(three_things)
+```
+
+We often want to make a numeric sequence following a specific pattern.  Use `:` to get consecutive whole numbers and `seq` to get a sequence.
+
+```{r}
+1:10
+
+# Example use: setting axis breaks in a graph
+seq(from = 0, to = 50, by = 5)
+```
+
+Most functions in R are *vectorized*. The operation is performed to the first element of each, then the second element of each, and so on.  We do not need to make a loop to do this type of operation.
+
+```{r}
+prime_numbers
+
+prime_numbers + 13
+
+# Use c() to add a new element
+c(prime_numbers, 13)
+```
+
+This also works for logical operators.
+
+```{r}
+prime_numbers == 2
+
+sum(prime_numbers == 2)
+```
+
+We can also use `%in%` to look for a specific item.
+
+```{r}
+2 %in% prime_numbers
+1 %in% prime_numbers
+```
+
+Note that %in% is not vectorized: it only has a single output.
+
+We can also do element-wise operations over two vectors.
+
+```{r}
+onetwothree <- 1:3
+fourfivesix <- 4:6
+
+onetwothree + fourfivesix
+
+fourfivesix - onetwothree
+
+onetwothree * fourfivesix
+```
+
+We have to be careful if the vectors are different sizes!
+
+```{r}
+fourfive <- 4:5
+
+onetwothree + fourfive
+```
+
+Which of the following functions are vectorized?
+
+```{r}
+prime_numbers <- c(2, 3, 5, 7, 11)
+
+log(prime_numbers)
+
+min(prime_numbers)
+max(prime_numbers)
+
+sqrt(prime_numbers)
+
+mean(prime_numbers)
+sum(prime_numbers)
+
+median(prime_numbers)
+abs(prime_numbers)
+```
+
+Exercise 3.2:
+
+Convert the course names to uppercase, e.g. "STAT240".
+
+```{r}
+c(toupper("Stat240"), toupper("cs300"), toupper("STAT309"))
+```
+
+
+For what values of $x$ is the following function negative?
+
+$$(\frac{1}{2}x - 8)^2 - 20$$
+
+```{r}
+# The function has a negative value when x = 9
+x <- 9
+
+((1/2)*x - 8)^2 - 20
+```
+
+Re-write the following code so that it doesn't need to use a `for` loop.
+
+```{r}
+meals <- c("enchiladas", "stir fry", "baked potatoes",
+           "pork chops", "casserole")
+
+plan <- rep("", 5)
+
+for (i in 1:5) {
+    plan[i] <- paste("Meal", i, "is", meals[i])
+}
+
+plan
+
+```
+
+
+We can also use the `replicate()` command to repeat an operation $n$ times.
+
+```{r}
+# Works like `rep()`
+replicate(n=5, FALSE)
+
+# Roll a die 12 times
+replicate(12, sample(1:6, 1))
+
+
+
+```
+
+```{r}
+# Custom expression: make a new name of length l
+new_word <- function(l) {
+  paste0(sample(letters, size = l, replace = T), collapse = "")
+}
+
+new_word(8)
+
+replicate(n = 9, new_word(5))
+```
+
+The `replicate()` command will be useful when we look at resampling-based methods.  It can also be used to generate random data for an experiment.
+
+
+## Dataframes
+
+Dataframes are a way to organize multiple vectors.  They're the usual tool for representing real life data.  We can build them with the `tibble` function from tidyverse.
+
+```{r}
+# "letters" is a built in R vector with the 26 lowercase letters
+letters
+
+library(tidyverse) # Need to do this to get tibble() to run
+
+alphabet <- tibble(char = letters,
+                   pos = 1:26,
+                   is_vowel = letters %in% c("a", "e", "i", "o", "u"))
+alphabet
+```
+
+Each row represents an individual letter.  We can subset a dataframe by index with the syntax `[,]`.  We can find a row by its name with `$`.
+
+```{r}
+# Value of 7th row, 1st column
+alphabet[7, 1]
+
+# Ninth row only
+alphabet[9, ]
+
+# Third column only
+alphabet[ , 3]
+
+alphabet$is_vowel
+```
+
+
+Below is an example of how to read in data from a url.  Make sure you have the tidyverse library loaded.
+
+```{r}
+eruptions_recent <- read_csv(
+  "https://bwu62.github.io/stat240-revamp/data/eruptions_recent.csv",
+  show_col_types = FALSE
+)
+
+# This opens a new tab in Rstudio
+View(eruptions_recent)
+
+# This gives a preview+summary of the data
+glimpse(eruptions_recent)
+```
+
+
+
+
+
+
+
+
+
