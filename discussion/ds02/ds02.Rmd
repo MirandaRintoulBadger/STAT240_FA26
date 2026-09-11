@@ -1,0 +1,98 @@
+---
+title: "Discussion 2"
+author: "Student's Name Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds02`.
+- The file `lake-monona-winters-2025.csv` should be in `STAT240/data`.
+
+The goal of today's discussion will be to break R in as many ways as possible!  We want to become comfortable with reading, understanding, and eventually debugging error messages.  You'll also see a demonstration of the most common type of error for new R users - "file not found" errors!
+
+
+# Problem 1
+#### (approx. 5 minutes)
+
+Your TA will demonstrate what happens when you try to load in a data file that isn't in the right place on your computer.
+
+```{r}
+library(tidyverse)
+
+# Read in a new dataframe
+## This assumes that:
+### tidyverse is installed and loaded
+### STAT240/data/ contains the data file
+### STAT240/discussion/ds02/ is your working directory.
+
+getwd()
+
+monona <- read_csv("../../data/lake-monona-winters-2025.csv")
+
+# This command should print out the first six rows of the monona winters dataset, starting with 1855-1856.
+
+head(monona)
+```
+
+
+# Problem 2
+#### (approx. 40 minutes)
+
+The chunks below contain a few lines of simple R code to play with.  **Break** the code by forcing it to return an error message, or write your own broken code.  Try to come up with as many unique error messages as possible!  At the end of discussion, you can see who was able to come up with the greatest number of distinct errors.
+
+- Make sure you understand what each line of code is doing before breaking it.
+- Since `error = TRUE` is set at the top, the file should still knit, but it should print error messages.
+- You'll earn one point per distinct error message you can see in your .html. Each message must be distinct for it to count.  So `Error: unexpected symbol in "2 x"` and `Error: unexpected symbol in "y<-x^4-5x"` are treated as the same error message.
+- Warning messages do not count.
+
+Here's an example to get you started.  It returns an error since the object `sprint_times` has not been defined.
+
+```{r}
+mean(sprint_times)
+```
+
+The code below is for you to play with.  Remember you can also write your own code with the goal of producing new and distinctive errors!
+
+```{r}
+# Do some arithmetic with numeric vectors
+1:10 + 11:20
+```
+
+```{r}
+# Define a logical vector and calculate the mean
+logicalValues <- c(TRUE, TRUE, FALSE, NA, FALSE, TRUE)
+
+mean(logicalValues)
+mean(logicalValues, na.rm = T)
+
+# What is the second item in this vector?
+logicalValues[2]
+```
+
+```{r}
+# Using tidyverse's tibble to make a dataset of instructors
+library(tidyverse)
+
+tibble(
+  name = c("Cameron", "Bret", "Miranda", "Sahifa", "Bi"),
+  favoriteNumber = c(12, 240, 8, NA, 3),
+  singleDigit = favoriteNumber < 10
+)
+```
+
+
+
+
+
+
+
+
+
+
+
