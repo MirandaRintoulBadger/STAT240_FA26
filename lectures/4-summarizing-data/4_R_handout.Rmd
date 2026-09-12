@@ -1,0 +1,453 @@
+---
+title: "Section 4: Introduction to ggplot2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Palmer penguins data
+
+The Palmer penguin data records several physical measurements of three penguin species from Palmer Station, Antarctica.  Use the code below to load in a tidy version of this data, from bwu62.  The .csv file must be in your `data` folder.
+
+```{r}
+## This assumes that:
+### STAT240/data/ contains the data file
+### STAT240/lecture/sect04-ggplot/ is your working directory.
+### If this gives you "Error: could not find file ... in working directory ...", go to Session > Set Working Directory > To Source File Location, and try again.
+### If that doesn't work, then you downloaded one or both files to the wrong place, or they have the wrong name - make sure they don't have a " (1)" or "-1" at the end of their names, which can happen when you download multiple times.
+
+penguins <- read_csv("../../data/penguins.csv")
+```
+
+Now explore the data.
+
+```{r}
+glimpse(penguins)
+```
+
+
+## Visual summaries
+
+```{r}
+# Basic empty canvas
+ggplot()
+
+# We defined the mapping - where is the plot?
+ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm))
+```
+
+To actually build the plot, we need to specify a geom and add it to the plot.
+
+```{r}
+ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm)) +
+  geom_histogram()
+```
+
+Let's add a fill aesthetic based on species.
+
+```{r}
+ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm, fill = species)) +
+  geom_histogram()
+```
+
+Now, let's change the bins.
+
+```{r}
+ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm, fill = species)) +
+  geom_histogram(binwidth = 5, boundary = 200)
+```
+
+Finally, let's add a title and better labels.
+
+```{r}
+ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm, fill = species)) +
+  geom_histogram(binwidth = 5, boundary = 200) +
+  labs(
+    title = "Histogram of Penguin Flipper Lengths",
+    x = "Flipper Length (mm)",
+    y = "Count",
+    fill = "Species"
+  )
+```
+
+Boxplots visualize the quartiles of our data, rather than the shape.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm)) +
+  geom_boxplot()
+
+ggplot(penguins,
+       aes(x = flipper_length_mm, fill = species)) +
+  geom_boxplot()
+```
+
+### Plotting categorical data
+
+Bar graphs depict a single categorical variable, like `species`.  `geom_bar()` counts the number of instances in a dataset.
+
+```{r}
+ggplot(penguins, aes(x = species)) +
+  geom_bar()
+```
+
+With `geom_col()`, you specify the heights of the bars yourself.  It is more flexible than `geom_bar()` but more work to use.
+
+Let's make a summarized version of the data with the counts and average flipper length of each species.
+
+```{r}
+# We'll cover this code next week!
+penguin_summary <- penguins %>%
+  group_by(species) %>%
+  summarize(n_penguins = n(),
+            mean_length = mean(flipper_length_mm))
+
+penguin_summary
+```
+
+```{r}
+# This code recreates the geom_bar graph
+ggplot(penguin_summary, aes(x = species, n_penguins)) +
+  geom_col()
+
+# But we can make other plots as well
+ggplot(penguin_summary, aes(x = species, mean_length)) +
+  geom_col()
+```
+
+### Plotting two numeric variables
+
+```{r}
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point()
+```
+
+We can use `geom_smooth` to draw a trendline.
+
+```{r}
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  geom_smooth()
+
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+`geom_line` builds a line plot.
+
+```{r}
+# This does not really make sense
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_line()
+
+# Enrollment data is a time series, so a line plot makes sense
+enrollment <- read_csv("https://bwu62.github.io/stat240-revamp/data/enrollment.csv")
+
+ggplot(enrollment, aes(x = year, y = enrolled_millions,
+                       color = sex, linetype = sex)) +
+  geom_line()
+```
+
+### Customization
+
+Add customization options within the geom itself.  These options change the look of the graph but not the information.
+
+```{r}
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point()
+
+ggplot(penguins,
+       aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color = "blue", alpha = 0.5,
+             size = 3, shape = 18)
+```
+
+
+Exercise 4.2:
+
+```{r}
+# Copy-paste one of the plots we made above and
+# change one of the visual aspects shown in the plot.
+```
+
+## Numeric summaries
+
+Let's find the mean and SD of the flipper length data.
+
+```{r}
+flip_len <- penguins$flipper_length_mm
+
+# mean "long way"
+n <- length(flip_len)
+(1/n) * sum(flip_len)
+
+# mean with R
+mean(flip_len)
+```
+
+```{r}
+# SD "long way"
+xbar <- mean(flip_len)
+
+sqrt( (1/(n-1)) * sum((flip_len - xbar)^2) )
+
+# SD with R
+sd(flip_len)
+```
+
+Let's add this as an annotation to our plot.
+
+```{r}
+xbar <- mean(flip_len)
+s <- sd(flip_len)
+
+##### We've seen this plot before
+p <- ggplot(data = penguins,
+       mapping = aes(x = flipper_length_mm, fill = species)) +
+  geom_histogram(binwidth = 5, boundary = 200)
+#####
+
+useful_lines <- xbar + c(-2, -1, 0, 1, 2)*s
+
+p +
+  geom_vline(xintercept = useful_lines,
+             linetype = c(2, 2, 1, 2, 2)) +
+  labs(subtitle = "-2, -1, 0, 1, 2 SDs from Mean")
+
+```
+
+The median, range, and IQR are based on percentiles (quantiles) of the data.
+
+```{r}
+# Two ways of finding the median
+median(flip_len)
+quantile(flip_len, 0.5)
+
+# What's the 30th percentile?  What about the 75th?
+quantile(flip_len, c(0.3, 0.75))
+```
+
+```{r}
+# IQR: 75th - 25th percentile
+quantile(flip_len, c(0.25, 0.75))
+IQR(flip_len)
+
+# Range: min and max
+range(flip_len)
+```
+
+A boxplot shows the quartiles (min, 25th, median, 75th, max) of the data.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm)) +
+  geom_boxplot()
+```
+
+Outlying points are drawn as dots.  An outlier is defined as 1.5 "box lengths" (1.5xIQR) away from the edges of the box.
+
+Let's compare the mean and median flipper length.
+
+```{r}
+p +
+  geom_vline(xintercept = mean(flip_len)) +
+  geom_vline(xintercept = median(flip_len), lty = 3) +
+  labs(subtitle = "Mean = Solid, Median = Dotted")
+```
+
+
+
+## Variable aesthetics
+
+Let's look at a scatterplot of bill depth vs flipper length.
+
+```{r}
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = F)
+```
+
+What if we want to color the points by species?
+
+```{r}
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm,
+                     col = species)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+What if we want the points to be colored, but keep only a single smooth line?  We have to specify the color mapping within `geom_point()` rather than the original `ggplot()`.  This is called a *local* aesthetic.
+
+```{r}
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm)) +
+  geom_point(aes(col = species)) +
+  geom_smooth(method = "lm", se = F)
+```
+
+What's wrong with the following plots?  How can we fix them?
+
+```{r}
+# Read and interpret the error messages from these two plots
+ggplot(penguins) +
+  geom_point(aes(color = species))
+
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm)) +
+  geom_point(color = species)
+```
+
+```{r}
+# Why are these points not huge? Why is there a legend for "size"?
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm)) +
+  geom_point(aes(color = species, size = 1000))
+
+# This just produces a gridded canvas with no points. Why?
+ggplot(penguins, aes(x = bill_depth_mm, y = flipper_length_mm,
+                    color = species))
+  geom_point()
+```
+
+
+## More customization
+
+There are countless options for customization in ggplot2.  There is tons of information here - I encourage you to use this section as a reference that you can return to as needed.
+
+### Text annotations
+
+Use `annotate()` to add text annotations on top of the plot.  For example, label a vertical line for the mean.
+
+```{r}
+xbar <- mean(flip_len)
+
+ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+  geom_histogram(binwidth = 5, boundary = 200) +
+  geom_vline(xintercept = xbar,
+             size = 1.5) +
+  annotate("text", x = 220, y = 50,
+                label = "Mean Flipper Length")
+```
+
+Or, add the values of the quartiles on top of a boxplot.
+
+```{r}
+quartiles <- quantile(flip_len, c(0.25, 0.5, 0.75))
+  
+ggplot(penguins, aes(x = flipper_length_mm)) +
+  geom_boxplot() +
+  annotate("text", x = quartiles, y = 0.45,
+                label = quartiles)
+```
+
+
+### Axis scales + labels
+
+Scales allow us more fine-grained control over how aesthetics are displayed.  For example, we might want to customize the spacing of the x or y axes.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm)) + 
+  geom_histogram(
+    binwidth = 5,
+    boundary = 70,
+    color = "steelblue4",
+    fill = "skyblue1"
+  )
+
+ggplot(penguins, aes(x = flipper_length_mm)) + 
+  geom_histogram(
+    binwidth = 5,
+    boundary = 70,
+    color = "steelblue4",
+    fill = "skyblue1"
+  ) +
+  # Custom x axis
+  scale_x_continuous(breaks = seq(170, 240, by = 10))
+```
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm)) +
+  geom_boxplot()
+
+# Add some extra spacing to the y-axis in the boxplot
+ggplot(penguins, aes(x = flipper_length_mm)) +
+  geom_boxplot() +
+  scale_y_continuous(limits = c(-1, 1))
+```
+
+This also works with discrete scales.
+
+```{r}
+ggplot(penguins, aes(x = species, fill = sex)) +
+  geom_bar(position = "dodge")
+
+scientific_names <- c("Pygoscelis adeliae", "Pygoscelis antarcticus",
+                      "Pygoscelis papua")
+
+ggplot(penguins, aes(x = species, fill = sex)) +
+  geom_bar(position = "dodge") +
+  scale_x_discrete(label = scientific_names)
+```
+
+### Color palettes
+
+We can also use custom color schemes for the `color` and `fill` aesthetics (also can be continuous or discrete). The default color scheme can be difficult to distinguish for certain types of color blindness.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+  geom_density(alpha = 0.3)
+```
+
+We can use the pre-built viridis palettes for either the fill or the color aesthetic.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+  geom_density(alpha = 0.3) +
+  scale_fill_viridis_d()
+
+ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+  geom_density(alpha = 0.3) +
+  scale_fill_viridis_d(option = "inferno")
+```
+
+We can also make our own custom color scheme.
+
+```{r}
+ggplot(penguins, aes(x = flipper_length_mm, fill = species)) +
+  geom_density(alpha = 0.3) +
+  scale_fill_manual(
+    values = c("Adelie" = "dodgerblue",
+               "Chinstrap" = "peachpuff",
+               "Gentoo" = "mediumorchid")
+    )
+```
+
+Here's an example of a continuous color scheme.
+
+```{r}
+ggplot(penguins, aes(x = body_mass_g, y = flipper_length_mm,
+                     color = flipper_length_mm)) +
+  geom_point() +
+  scale_color_viridis_c(option = "cividis")
+
+
+ggplot(penguins, aes(x = body_mass_g, y = flipper_length_mm,
+                     color = flipper_length_mm)) +
+  geom_point() +
+  scale_color_gradient(low = "tomato", high = "dodgerblue")
+```
+
+
+
