@@ -1,0 +1,161 @@
+---
+title: "Homework 2"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw02` on your local computer.
+- You should also download `lake-monona-winters-2025.csv` and `lake-mendota-winters-2025.csv` to `STAT240/data` on your local computer.
+
+While you should create your answers in the .Rmd file, homework problems are better formatted and therefore easier to read in the .html file. We recommended frequently knitting and switching between the two as you read and solve problems.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+The code below takes the built-in dataset `storms` and cleans the data so that each row shows the maximum wind speed (in knots) of a different storm.
+
+```{r}
+# This chunk is provided for you - do not edit
+storms_clean <- storms %>%
+  filter(status %in% c("tropical depression",
+                       "tropical storm", "hurricane")) %>%
+  group_by(name) %>%
+  slice_max(wind, with_ties = F)
+```
+
+(a) Starting with `storms_clean`, build a histogram of maximum wind speed (the `wind` column).  Incorporate the following customizations:
+
+- Bars should span neat intervals of ten; [40, 50], [50, 60], and so on. Make sure they start and end on multiples of 10.
+
+- Change the outline and inside color of the bars to some custom combination that you think looks good together.
+
+(b) Use R to calculate the average and median wind speed. 
+
+(c) Comment on the size of the mean and median and how they relate to the shape given in the histogram. 
+
+
+# Problem 2
+
+Working with `storms_clean` from problem 1, your friend is trying to produce a plot of frequency counts for the variable `status`, which classifies the storm as a tropical depression, tropical storm, or hurricane.
+
+Your friend's attempt below is producing an error.
+
+```{r, error = TRUE}
+# Fix your friend's error!
+ggplot(storms_clean, aes(x = status)) +
+  geom_col()
+```
+
+Fix your friend's error by editing the above chunk (or create another one). Then, explain why the original code was wrong and why the fixed code works.
+
+
+# Problem 3
+
+The dataset `lake-monona-winters-2025.csv` records the first freeze, last thaw, and duration of ice cover on Lake Monona for each winter.  We are primarily interested in the following variables:
+
+- `ff_cat`, the categorical variable describing the period of the day of the first freeze
+- `year1`, the starting year of that winter
+- `duration`, the duration of ice cover in days
+
+```{r read-data, echo = FALSE}
+monona <- read_csv("../../data/lake-monona-winters-2025.csv")
+```
+
+(a) Build a basic boxplot of the `duration` variable.
+
+(b) Use R to calculate the 25th, 50th, and 75th percentiles and the IQR of the freeze duration data.  Verify that the values match what is shown in the boxplot.
+
+(c) The boxplot in (a) should show several outliers on each side of the boxplot.  Explain *numerically* why these points are considered to be outliers.  In other words, how do we calculate how long the box "whiskers" should be?
+
+
+# Problem 4
+
+Code in the next chunk makes a scatter plot that shows how the variable `duration` changes with time (using `year1`).
+
+```{r}
+# This chunk is provided for you - do not edit
+ggplot(monona, aes(x = year1, y = duration)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se=FALSE) +
+  labs(
+    title = "Lake Monona Winter Closure Durations Over Time",
+    subtitle = "Trend Line Shown in Blue"
+  )
+```
+
+(a) In a typical year around 1875, how long would Lake Monona close due to ice? (No code needed - your best guess based on the plot will suffice.) 
+
+(b) In a typical year around 2000, how long would Lake Monona close due to ice?
+
+(c) What does the argument `method = "lm"` change on the plot?
+
+(d) What does the argument `se = FALSE` change on the plot?
+
+(e) What information about freeze duration is present in the scatterplot but not present in the boxplot from problem 3(a)?
+
+
+# Problem 5
+
+The below chunk (which is hidden in the knitted file) reads in `lake-mendota-winters-2025.csv` into a new object called `mendota`.  This dataframe records the same winter freeze variables for Lake Mendota, just like the `monona` data does for Lake Monona.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+mendota <- read_csv("../../data/lake-mendota-winters-2025.csv")
+```
+
+The code below uses both datasets to create a single plot of year vs duration for both lakes.  
+
+```{r}
+ggplot(mapping = aes(x = year1, y = duration)) +
+  geom_smooth(data = mendota, color = "red") +
+  geom_smooth(data = monona, color = "blue")
+```
+
+Identify all of the aesthetics used in this plot, and explain whether each one is constant or variable.  Are the variable aesthetic(s) global or local?
+
+
+# Problem 6
+
+The below chunk creates a new dataframe called `combined`, which contains freeze durations for both Lake Mendota AND Lake Monona.
+
+```{r}
+# We will learn how this code works next week!
+combined = bind_rows(monona %>% mutate(lake = "Monona"), mendota %>% mutate(lake = "Mendota")) %>% 
+  arrange(desc(year1)) %>% 
+  select(lake, year1, duration)
+
+# Take a look at the first six rows; notice we have TWO rows for each year now, one for each lake!
+head(combined)
+```
+
+Create a similar plot to problem 5, with `duration` on the y axis, `year1` on the x axis, and two smooth lines, one for each lake. This time, use the `combined` dataset and a single call to `geom_smooth()`.
+
+
+# Problem 7
+
+Using the `combined` data, create a plot similar to problems 5 and 6, but with a line showing each year's specific data point, rather than a smooth line.  There should be two separate lines for each lake.
+
+
+# Problem 8
+
+Compare the graphs from problems 6 and 7.
+
+Consider trying to determine in what time period Lake Mendota was freezing, on average, longer than Lake Monona. Which of graph do you prefer for this determination and why?
+
