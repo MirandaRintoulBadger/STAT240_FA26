@@ -1,0 +1,79 @@
+---
+title: "Discussion 3"
+author: "Present Group Member Names Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds03`.
+- The file `ships.csv` should be in `STAT240/data`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to tell a story with a ggplot2 graph.  You'll have the opportunity to be creative with how you design your plot and offer feedback on other students' work.
+
+
+# Problem 1 
+#### (approx. 10 minutes)
+
+The `ships` dataset from R package MASS gives information on the number of damage incidents and several other variables for 40 ships. The columns are:
+
+- `type`: "A" to "E"
+- `year` of construction: 1960–64, 65–69, 70–74, 75–79
+- `period` of operation: 1960–74, 75–79
+- `service`: aggregate months of service
+- `incidents`: number of damage incidents
+
+The code below reads in the data and shows the first few rows.
+
+```{r}
+## This assumes that:
+### STAT240/data/ contains the data file
+### STAT240/discussion/ds03/ is your working directory.
+
+ships <- read_csv("../../data/ships.csv")
+
+head(ships)
+```
+
+After exploring the data, think about a potential research question you could help answer visually.  For example, "What type of ship is most prone to damage incidents?" or "How does months of service impact the number of incidents?"  If you like, you can tidy or wrangle the data to help answer your question.
+
+
+# Problem 2 
+#### (approx. 25 minutes)
+
+Use `ggplot()` to create a visual that helps answer the question you identified in problem 1.  This is a very open-ended question with no right or wrong answer - try to be creative with the type of graph you make, and feel free to use the help files, course notes, or other online guides as references.
+
+As part of your analysis, calculate at least one relevant numeric summary of a numeric variable (e.g. mean, median, SD, IQR).  Show this value as an annotation on your plot (unless it's included in the plot already, like a boxplot and median).
+
+Your plot should have the following:
+
+- Clear and easy-to-interpret visuals
+- Informative titles and labels
+- At least one of the geoms discussed in class
+- Some type of customization (shapes, color scheme, theme, etc)
+- A visual element showing the value of a numeric summary
+
+```{r}
+ships %>%
+  ggplot()
+```
+
+
+# Problem 3 
+#### (approx. 10 minutes)
+
+Share your research question and visual with another group, and have them do the same.  Give some constructive feedback to the other group.  What does their plot do well, and what improvements could be made?  Does their graph effectively communicate the answer to their research question?
+
+
+
+
+
+
+
