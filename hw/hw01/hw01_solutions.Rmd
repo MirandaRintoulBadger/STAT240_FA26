@@ -1,0 +1,315 @@
+---
+title: "Homework 1"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw01` on your local computer.
+
+While you should create your answers in the .Rmd file, homework problems are better formatted and therefore easier to read in the .html file. We recommended frequently knitting and switching between the two as you read and solve problems.
+
+# Problem 1
+
+Consider a vector `a` which has three numeric elements, a vector `b` which has two numeric elements, and a single number on its own, `c`.
+
+For each of the following operations, write down how many elements long the output will be.
+
+Think through the question first and make an initial guess, then check your work in the console. Also try to figure out which command will throw a warning message.
+
+(a) `a + c`
+
+[This command will return 3 numeric element(s).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+a <- 1:3
+b <- 1:2
+c <- 1
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+a + c
+```
+
+(b) `sum(a)`
+
+[This command will return 1 numeric element(s).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(a)
+```
+
+(c) `sum(a * c)`
+
+[This command will return 1 numeric element(s).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(a * c)
+```
+
+(d) `a + b`
+
+[This command will return 3 numeric element(s).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+a + b
+```
+
+(e) `sum(a) + b`
+
+[This command will return 2 numeric element(s).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(a) + b
+```
+
+
+# Problem 2
+
+(a) Create a vector of all the whole numbers from 1 to 50 (including the endpoints), and **save** it in a new variable called `firstFifty`.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+firstFifty <- 1:50
+```
+
+(b) First compute the mean of `firstFifty`.
+
+    Then, create a new vector which is the result of subtracting that mean from each value in `firstFifty`.
+
+    Finally, take the sum of that resulting vector.
+
+    Let that sum be **printed as output**, do not save it as a variable.
+    
+    *Note: This result is not just a special case with these specific numbers, this process will return that sum for any vector!*
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(firstFifty - mean(firstFifty))
+```
+
+
+# Problem 3
+
+Compute the **standard deviation** of `firstFifty` without using the `sd` command. Let this single number be printed as output.
+
+To compute the standard deviation, execute the following steps in this order:
+
+- Compute the mean of `firstFifty` and subtract it from every element in `firstFifty`, as in the previous question.
+
+- Square every element in that vector.
+
+- Take the sum of that new squared vector; this should be close to 10,400.
+
+- Divide that number by (the length of the vector minus 1). You can obtain the length of firstFifty with `length(firstFifty)`. Don't forget parentheses & order of operations!
+
+- Finally, take the square root (`sqrt()`) of the number you got from the previous step.
+
+    The mathematical notation for this is: $$\sqrt{\frac{\sum_{i=1}^n{(x_i - \bar{x})^2}}{n-1}}$$ where $x$ is your vector of interest, in this case `firstFifty`, $n$ is the length of $x$, and $\bar{x}$ is the mean of $x$. 
+    
+    We encourage you to use `sd(firstFifty)` to check your work.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# Step by step answer
+deviations <- firstFifty - mean(firstFifty)
+
+sumSquaredDeviations <- sum(deviations^2)
+
+insideFraction <- sumSquaredDeviations/(length(firstFifty) - 1)
+
+finalAnswer <- sqrt(insideFraction)
+
+finalAnswer
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# Single line answer
+sqrt(sum((firstFifty - mean(firstFifty))^2)/(length(firstFifty)-1))
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# Check work with sd()
+sd(firstFifty)
+```
+
+
+
+# Problem 4
+
+We have provided you below with a vector containing all of the prime numbers from 1 to 50.
+
+```{r}
+# We have written this code for you, do not edit it
+primes <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47)
+```
+
+Create a vector of logical elements - that is, `TRUE`s and `FALSE`s; which indicates whether each of the elements in `firstFifty` is a prime number.
+
+Let this vector be **printed as output**, do not save it as a variable.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+firstFifty %in% primes
+```
+
+
+# Problem 5
+
+Below we demonstrate the base R function `substr()`.
+
+```{r}
+substr("abcde", 2, 4)
+```
+
+Use help page for `substr()` (which you can access with `?substr`) to answer the following questions.
+
+(a) What does the `substr()` function do?
+
+[Extracts a substring of characters from a character vector.]{.soln}
+
+(b) What does `substr()` do to a non-character input?  Answer this by reading the help file, then test out the behavior with an example in R.
+
+[It is converted to a character string automatically.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+substr(134012, 3, 5)
+```
+
+(c) Use the `substr()` function and the vector defined below to create a new vector of three-letter abbreviations for all twelve months of the year.  Let this be printed as output.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+months <- c("January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December")
+
+abbreviations <- substr(months, 1, 3)
+
+abbreviations
+```
+
+
+# Problem 6
+
+Create a dataframe using the `tibble()` command with five columns:
+
+- The first column should be called `char`, and contain the 26 values of `letters`,
+    
+- The second column should be called `pos`, and contain the whole number values 1, 2, ..., 25, 26.
+    
+- The third column should be called `isVowel`, and should contain 26 logical values according to whether `char` in that row is one of "a", "e", "i", "o", or "u" or not. We won't consider "y" as a vowel for simplicity.
+     
+- The fourth column should be called `isPrime`, and should contain 26 logical values according to whether `pos` in that row is a prime number (or not).
+
+- The fifth column should be called `vowelAndPrime`, and should contain 26 logical values; `TRUE` when that row has both a vowel and a prime number, and `FALSE` otherwise.
+
+Save this dataframe in a new variable called `alphanumeric`.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+alphanumeric <- tibble(
+  char = letters,
+  pos = 1:26,
+  isVowel = char %in% c("a", "e", "i", "o", "u"),
+  isPrime = pos %in% primes,
+  vowelAndPrime = isVowel & isPrime
+)
+```
+
+
+# Problem 7
+
+Once you have created `alphanumeric` in Problem 6, uncomment (delete the #) the lines of code in the following chunk and run it.
+
+```{r}
+alphanumeric
+
+print(alphanumeric, n = Inf)
+```
+
+* Notice that `print` with the `n = Inf` output is specifying to print ALL (`Inf` = infinity) rows of the data frame, whereas just calling `alphanumeric` on its own defaults to 10 rows being printed.
+
+Looking at this output, Which vowel(s) are in a prime number position? In other words, in which rows is `vowelAndPrime` TRUE?
+
+["e" is the only vowel which is in a prime number position (5).]{.soln}
+
+
+# Problem 8
+
+The five lines of code below all return an error message.  Read the error messages, fix each line of code, and briefly describe how you resolved each error.
+
+(a) We want to get the first element of the `primes' vector.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# primes(1)
+
+primes[1]
+```
+
+[Parentheses are used to contain function arguments, so we need to replace them with square brackets to index a vector.]{.soln}
+
+(b) We want to define a character vector with two elements, `apple` and `banana`.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# fruits <- c("apple, " "banana")
+
+fruits <- c("apple", "banana")
+
+fruits
+```
+
+[The comma is in the wrong place.  It should be outside the quotes, separating out the two character strings.]{.soln}
+
+(c) We want to set `notAPrimeNumber` equal to 51.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# notAPrimeNumber == 51
+
+notAPrimeNumber <- 51
+# or
+notAPrimeNumber = 51
+
+notAPrimeNumber
+```
+
+[The double equals sign is for making a logical comparison.  For variable assignment, we use either a single equals sign `=` or an arrow `<-`.]{.soln}
+
+(d) We want to get the first column of the built-in `mtcars` dataset.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# mtcars$1
+
+mtcars$mpg
+# or
+mtcars[,1]
+```
+
+[The dollar-sign operator is used to extract a df column by its name.  We need to replace the 1 with the actual name of the first column or use bracket and comma notation.]{.soln}
+
+(e) We want to repeat the code `runif(1)`, which generates a random number between 0 and 1, six times.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+#replicate(runif(1), 6)
+
+replicate(6, runif(1))
+replicate(expr = runif(1), n = 6)
+```
+
+[The error occurred because the arguments to the `replicate()` function were out of order, so R did not understand what to replicate or how many times.  We can fix this by re-arranging the arguments so they are in the correct order, or by naming the arguments `expr` and `n` specifically.]{.soln}
+
+
+# Submission
+
+Once you have finished all the problems above, **knit** this file and submit **BOTH the .Rmd and .html files on Canvas!**
+
