@@ -1,0 +1,111 @@
+---
+title: "Discussion 3"
+author: "Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds03`.
+- The file `ships.csv` should be in `STAT240/data`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to tell a story with a ggplot2 graph.  You'll have the opportunity to be creative with how you design your plot and offer feedback on other students' work.
+
+
+# Problem 1 
+#### (approx. 10 minutes)
+
+The `ships` dataset from R package MASS gives information on the number of damage incidents and several other variables for 40 ships. The columns are:
+
+- `type`: "A" to "E"
+- `year` of construction: 1960–64, 65–69, 70–74, 75–79
+- `period` of operation: 1960–74, 75–79
+- `service`: aggregate months of service
+- `incidents`: number of damage incidents
+
+The code below reads in the data and shows the first few rows.
+
+```{r}
+## This assumes that:
+### STAT240/data/ contains the data file
+### STAT240/discussion/ds03/ is your working directory.
+
+ships <- read_csv("../../data/ships.csv")
+
+head(ships)
+```
+
+After exploring the data, think about a potential research question you could help answer visually.  For example, "What type of ship is most prone to damage incidents?" or "How does months of service impact the number of incidents?"  If you like, you can tidy or wrangle the data to help answer your question.
+
+[I'm going to look at the relationship between three variables - I want to see how both the number of months of operation and the type of ship affect the number of damage incidents.]{.soln}
+
+
+# Problem 2 
+#### (approx. 25 minutes)
+
+Use `ggplot()` to create a visual that helps answer the question you identified in problem 1.  This is a very open-ended question with no right or wrong answer - try to be creative with the type of graph you make, and feel free to use the help files, course notes, or other online guides as references.
+
+As part of your analysis, calculate at least one relevant numeric summary of a numeric variable (e.g. mean, median, SD, IQR).  Show this value as an annotation on your plot (unless it's included in the plot already, like a boxplot and median).
+
+Your plot should have the following:
+
+- Clear and easy-to-interpret visuals
+- Informative titles and labels
+- At least one of the geoms discussed in class
+- Some type of customization (shapes, color scheme, theme, etc)
+- A visual element showing the value of a numeric summary
+
+```{r, class.source="rsoln", class.output="rsoln"}
+median_incidents <- median(ships$incidents)
+max_incidents <- max(ships$incidents)
+
+ggplot(ships, aes(x = service, y = incidents)) +
+  geom_point(aes(col = type)) +
+  geom_hline(yintercept = median_incidents, linetype = "dashed") +
+  annotate("text", x = 30000, y = 5, label = "Median Incidents: 2") +
+  annotate("text", x = 37000, y = 58, label = "Max Incidents: 58")
+  labs(x = "Aggregate Months of Service",
+       y = "Damage Incidents",
+       title = "Damage Incidents and Months of Service for 5 Ship Types",
+       subtitle = "1960-1979",
+       col = "Ship Type") +
+  scale_color_manual(
+    values = c("A" = "#000000",
+               "B" = "#E69F00", 
+               "C" = "#CC79A7",
+               "D" = "#009E73", 
+               "E" = "#F0E442")
+    )
+```
+
+[There appears to be a positive association between the number of aggregate months of operation and the number of damaging incidents.  But this relationship appears to be different for ship type B compared to all of the other ship types.  The ships of type B seem to have much higher months of service and a somewhat higher number of damaging incidents compared to the other ship types. I also included annotations for the maximum and median number of incidents to give additional context.]{.soln}
+
+# Problem 3 
+#### (approx. 10 minutes)
+
+Share your research question and visual with another group, and have them do the same.  Give some constructive feedback to the other group.  What does their plot do well, and what improvements could be made?  Does their graph effectively communicate the answer to their research question?
+
+[Example: The plot above clearly shows that ships of type B have many more months of service than the other types, and also have more damaging incidents.  However, the lower part of the graph is difficult to read, meaning it is almost impossible to distinguish any patterns between the other ship types.  Something like a log transformation might make the data points with low months of service and damaging incidents easier to interpret.]{.soln}
+
+
+
+
+
