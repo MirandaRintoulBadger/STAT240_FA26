@@ -1,0 +1,714 @@
+---
+title: "Section 5: Data Tidying"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## The pipe
+
+The pipe passes the object on the left to the function on the right.
+(Ctrl + Shift + M) or (Command + Shift + M)
+
+```{r}
+sqrt(4)
+4 %>% sqrt()  # sqrt(4) is 2
+
+log(1000, base = 10)
+1000 %>% log(base = 10)  # Log base 10 of 1000 is 3
+```
+
+The pipe allows for greater readability with a long chain of operations.  What if we need to do a long chain of operations?
+
+To generate a user's email, add their last name initial to their first name, add a random digit, add the @ address, and make sure everything is lowercase.
+
+```{r}
+firstnames <- c("Lourens", "Mervyn", "Genevieve", "Petronella")
+lastnames <- c("Eberly", "Stevenson", "Lombardt", "Purvess")
+
+# Unintuitive / unreadable way
+tolower(paste(substr(lastnames, 1, 1), firstnames,
+                      sample(0:9, 4, replace=T),
+                      "@stat240.com", sep = ""))
+
+# Intuitive / readable way
+lastnames %>%
+  # Get 1st letter
+  substr(1, 1) %>%
+  # Add first name
+  paste(firstnames, sep = "") %>%
+  # Add random digit
+  paste(sample(0:9, 4, replace = T), sep = "") %>%  
+  # Add address
+  paste("@stat240.com", sep = "") %>%
+  # Make lowercase
+  tolower()
+```
+
+
+## dplyr basics
+
+We'll continue working with the Palmer penguins data as an example.
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv")
+
+penguins
+```
+
+
+### Column editors
+
+`relocate()` moves columns without adding or removing any.  By default, it takes columns and moves them to the *left*.
+
+```{r}
+penguins %>% 
+  relocate(year, sex)
+```
+
+Or, we can move columns to specific places.
+
+```{r}
+penguins %>% 
+  relocate(island, .after = year)
+```
+
+`rename()` changes the column names.
+Write `new_name = old_name`.
+
+```{r}
+penguins %>%
+  rename(species_name = species, island_name = island)
+```
+
+`select()` reduces the df to the columns we specify.
+
+```{r}
+# select just species, sex, flipper length, and body mass
+penguins %>%
+  select(species, sex, flipper_length_mm, body_mass_g)
+
+# Can also "de-select"
+# e.g. select everything except island and
+# columns body mass through year
+
+penguins %>%
+  select(-island, -(body_mass_g:year))
+```
+
+
+Note that none of these actions are changing the `penguins` object.  If we want to save the results, we can use `<-`, either to define a new object or overwrite the current object.
+
+```{r}
+# Let's make a smaller penguin dataset that's easier to see
+penguins_small <- penguins %>%
+    select(species, sex, bill_length_mm, bill_depth_mm)
+
+penguins_small
+```
+
+`mutate()` creates a new column.  For example, make a new column whose value is constant for all rows.
+
+```{r}
+penguins_small %>%
+  mutate(study = "Palmer")
+```
+
+Or, we can change the value of an existing column.
+
+```{r}
+penguins_small %>%
+  mutate(sex = substr(toupper(sex), 1, 1))
+```
+
+More commonly, create a new column based on the values of other columns.  Let's estimate the volume of a penguin bill as a cylinder.
+
+```{r}
+penguins_small %>%
+  mutate(bill_cross_section_mm2 = pi * (bill_depth_mm / 2)^2,
+         
+         bill_vol_mm3 = bill_cross_section_mm2 * bill_length_mm
+)
+```
+
+By using `case_when()`, we can mutate a categorical column based on a condition.
+
+```{r}
+penguins_small %>%
+  mutate(type = case_when(bill_length_mm < 40 ~ "small bill",
+                          bill_length_mm < 48 ~ "med bill",
+                          .default = "large bill")
+         )
+```
+
+
+### Row editors
+
+`arrange()` lets us order the rows while keeping the columns unchanged.  It sorts rows from smallest to largest.
+
+```{r}
+penguins %>% 
+  arrange(flipper_length_mm)
+
+penguins %>%
+  arrange(island)
+```
+
+If we want to go from largest to smallest, use `desc`.
+
+```{r}
+penguins %>%
+  arrange(desc(island))
+
+# Advanced note that you don't have to know: R considers
+# uppercase as "greater" than lowercase IF IT IS THE SAME LETTER.
+# Otherwise, it ignores case.
+# So, "B" > "b", but "A" < "b".
+```
+
+You can also provide further variables to break ties in the first one, if desired. If not, the order in the original dataframe will break the tie.
+
+
+The `filter()` command chooses specific rows based on a condition.  In R, conditions evaluate to `TRUE` or `FALSE`.
+
+```{r}
+penguins
+
+penguins$species 
+
+# For each row in the data, check whether its species is Chinstrap
+penguins$species == "Chinstrap" 
+```
+
+Let's keep only the rows corresponding to Chinstrap penguins.
+
+```{r}
+penguins %>% 
+  filter(species == "Chinstrap")
+```
+
+We can set more complicated conditions with `&` (AND) and `|` (OR).
+
+```{r}
+# Only look at rows where body mass is between 3000 and 4000
+penguins %>% 
+  filter(body_mass_g >= 3000 & body_mass_g <= 4000)
+
+# Look at rows where body mass is less than 3000 OR above 4000
+penguins %>% 
+  filter(body_mass_g < 3000 | body_mass_g > 4000)
+```
+
+We can use `slice_max()` or `slice_min()` to get the row(s) with the most extreme value in a given column.
+
+```{r}
+# Which row has the longest flipper length?
+penguins %>%
+  slice_max(flipper_length_mm) 
+
+# Which one has the smallest body mass?
+penguins %>%
+  slice_min(body_mass_g)
+
+# We can also ask for the smallest n
+penguins %>%
+  slice_min(body_mass_g, n = 5)
+```
+
+We can also set `with_ties` to be FALSE.  The function will return ties by default.
+
+```{r}
+# We can also ask for the smallest n
+penguins %>%
+  slice_min(body_mass_g, n = 5, with_ties = F)
+```
+
+
+`drop_na()` removes any rows with missing values.  In the `starwars` dataset, we have `NA` for the hair color of droids.
+
+```{r}
+# C-3PO and R2-D2 and R5-D4's hair_color are NA.
+starwars
+
+# Normally, there are 87 characters
+nrow(starwars)
+```
+
+Now let's get rid of those rows.
+
+```{r}
+# Goodbye to those rows! Now we skip right from Luke to Darth Vader.
+starwars %>% 
+  drop_na(hair_color)
+
+# After removing rows with NA, 82 rows are left
+starwars %>% 
+  drop_na(hair_color) %>% 
+  nrow()
+```
+
+By default, `drop.na` looks for missing values in ALL columns.
+
+```{r}
+drop_na(starwars)
+```
+
+If we only want to drop NA values from a single column, specify the column name or use `filter`.
+
+```{r}
+starwars %>%
+  drop_na(hair_color)
+
+starwars %>% 
+  filter(!is.na(hair_color))
+```
+
+
+Exercise 5.1
+
+Friends A and B are fighting over who is the most die-hard Star Wars fan. Settle the debate with the built-in `starwars` data and use dplyr verbs to help answer their requests.
+
+A: "The oldest character is an Ewok!"
+B: "The oldest character is of Yoda's species!"
+
+```{r}
+starwars %>% 
+  relocate(birth_year, species) %>%
+  slice_max(birth_year)
+```
+
+
+A: "Kamino and Utapau are the only homeworlds with characters that have black eyes and are over 200 cm tall!"
+B: "Kamino and Utapau are the only homeworlds with characters that have black eyes or are over 200 cm tall!"
+
+```{r}
+starwars %>%
+  filter(eye_color == "black" & height > 200) %>%
+  relocate(homeworld)
+
+starwars %>%
+  filter(eye_color == "black" | height > 200) %>%
+  relocate(homeworld)
+```
+
+
+A: "The Droid characters appear in decreasing order of age!"
+B: "No, because IG-88 is older than R5-D4!"
+
+```{r}
+starwars %>%
+  filter(species == "Droid") %>%
+  relocate(birth_year)
+```
+
+
+A: "There's no character with a name longer than 20 letters!"
+B: "The longest names have 21 letters!"
+
+```{r}
+starwars %>%
+  mutate(name_length = nchar(name)) %>%
+  relocate(name_length) %>%
+  arrange(desc(name_length))
+
+
+# Without white space
+starwars %>%
+  mutate(name_length = nchar(str_replace_all(name, " ", ""))) %>%
+  relocate(name_length) %>%
+  arrange(desc(name_length))
+```
+
+
+A: "Female characters are the group with the shortest average height!"
+B: "Female characters are only the group with the second shortest average height!  Characters with no biological sex have the shortest average height!"
+
+```{r}
+# Hmmmm........
+female_chars <- starwars %>%
+  filter(sex == "female")
+
+male_chars <- starwars %>%
+  filter(sex == "male")
+
+herm_chars <- starwars %>%
+  filter(sex == "hermaphroditic")
+
+none_chars <- starwars %>%
+  filter(sex == "none")
+
+
+mean(female_chars$height, na.rm = T)
+mean(male_chars$height, na.rm = T)
+mean(herm_chars$height, na.rm = T)
+mean(none_chars$height, na.rm = T)
+
+
+# THERE HAS TO BE A BETTER WAY!
+starwars %>%
+  group_by(sex) %>%
+  drop_na(height) %>%
+  summarize(avg_height = mean(height))
+
+
+```
+
+
+### summarize
+
+`summarize()` reduces columns to a single number with a "reducing function".
+
+Let's think about how R does operations with vectors.  Some operations return the same number of elements as the original vector.
+
+```{r}
+prime_numbers <- c(2, 3, 5, 7, 11)
+fibonacci_numbers <- c(0, 1, 1, 2, 3)
+
+prime_numbers + fibonacci_numbers
+
+prime_numbers^2
+```
+
+Other operations reduce a vector to a single number.
+
+```{r}
+sum(prime_numbers)
+
+max(fibonacci_numbers)
+
+mean(prime_numbers)
+```
+
+When using `summarize()`, we apply a reducing function to a column (or columns) in our data set.
+
+```{r}
+penguins %>%
+  summarize(avg_mass = mean(body_mass_g),
+            min_mass = min(body_mass_g),
+            max_mass = max(body_mass_g))
+```
+
+`summarize()` becomes even more powerful when combined with the `group_by()` command.
+
+### group_by
+
+`group_by()` is a powerful command that changes the *grouping* structure of a df.  On its own, it does not change any rows or columns:
+
+```{r}
+penguins %>% 
+  group_by(species)
+```
+
+What if we want to find the average, min, and max body mass of the different species?  So far, we have a naive approach:
+
+```{r}
+penguins %>%
+  filter(species == "Adelie") %>%
+  summarize(avg_mass = mean(body_mass_g),
+            min_mass = min(body_mass_g),
+            max_mass = max(body_mass_g))
+
+penguins %>%
+  filter(species == "Chinstrap") %>%
+  summarize(avg_mass = mean(body_mass_g),
+            min_mass = min(body_mass_g),
+            max_mass = max(body_mass_g))
+
+# and so on for all of the species...
+```
+
+`group_by()` is a much more convenient way to perform the same operation multiple times.
+
+```{r}
+penguins %>%
+  group_by(species) %>%
+  summarize(avg_mass = mean(body_mass_g),
+            min_mass = min(body_mass_g),
+            max_mass = max(body_mass_g))
+```
+
+We can even group by multiple variables:
+
+```{r}
+penguins %>%
+  group_by(species, sex) %>%
+  summarize(avg_mass = mean(body_mass_g),
+            min_mass = min(body_mass_g),
+            max_mass = max(body_mass_g))
+```
+
+
+We use `mutate` to create a new column, usually based on the values of other columns.
+
+```{r}
+penguins %>% 
+  mutate(new_column = 5) %>% 
+  relocate(new_column)
+
+penguins %>% 
+  mutate(avg_mass = mean(body_mass_g)) %>% 
+  relocate(avg_mass)
+```
+
+When we use `group_by()`, each row gets assigned a number based on group.  For example, we find average body mass separately by species.
+
+```{r}
+penguins %>% 
+  group_by(species) %>% 
+  mutate(avg_mass = mean(body_mass_g)) %>% 
+  relocate(avg_mass)
+```
+
+What is the standard score for each penguin's body mass?
+
+```{r}
+penguins %>% 
+  mutate(avg_mass = mean(body_mass_g),
+         sd_mass = sd(body_mass_g),
+         
+         std_mass = (body_mass_g - avg_mass) / sd_mass) %>% 
+  
+  relocate(std_mass)
+```
+
+Now, let's try grouping by species first.
+
+```{r}
+penguins %>% 
+  group_by(species) %>% 
+  mutate(avg_mass = mean(body_mass_g),
+         sd_mass = sd(body_mass_g),
+         
+         std_mass = (body_mass_g - avg_mass) / sd_mass) %>% 
+  
+  relocate(std_mass)
+```
+
+
+Finally, use `ungroup()` to remove the grouping property.
+
+```{r}
+largest <- penguins %>%
+  group_by(species) %>%
+  slice_max(body_mass_g, n = 5)
+
+largest
+
+largest %>%
+#  ungroup() %>%
+  summarize(avg_mass = mean(body_mass_g))
+```
+
+
+Exercise 5.2: BEST PENGUIN BEAK CONTEST!
+
+Suppose that the volume of a Chinstrap or Gentoo penguin's beak is approximated by $$(\pi\times \text{radius}^2 \times length) / 2.5$$, and the volume of an Adelie penguin's beak is approximated by $$(\pi\times \text{radius}^2 \times length) / 2$$.
+
+- Calculate each penguin's approximate beak volume (pay attention to radius vs depth!)
+- Find the penguin with the largest beak volume for each combination of species and island.
+- Were most of the winners measured in 2007 or 2009?
+
+```{r}
+penguins %>%
+  mutate(radius = bill_depth_mm / 2) %>%
+  mutate(bill_vol = case_when(
+    species == "Adelie" ~ (pi * radius^2 * bill_length_mm)/2,
+    .default = (pi * radius^2 * bill_length_mm)/2.5
+  )) %>%
+  group_by(species, island) %>%
+  slice_max(bill_vol) %>%
+  relocate(year)
+```
+
+## Joining
+
+The dataset `grocery-list.csv` shows a customer's grocery list, while `supermarket.csv` shows the type and price of produce items at the supermarket.
+
+```{r}
+grocery_list <- read_csv("../../data/grocery-list.csv")
+
+supermarket <- read_csv("../../data/supermarket.csv")
+
+grocery_list
+supermarket
+```
+
+Let's combine this information into a single dataset.
+
+
+## Mutating joins
+
+`left_join()` will merge the datasets and keep all values in the leftmost (x) dataframe.  We specify the column to join by.
+
+```{r}
+left_join(grocery_list, supermarket)
+
+# Pipe notation
+grocery_list %>% 
+  left_join(supermarket)
+
+# Now we can calculate the total cost of the customer's items
+grocery_list %>% 
+  left_join(supermarket) %>%
+  mutate(cost = quantity * price)
+```
+
+`right_join()` does the opposite, by keeping all values in the rightmost (y) dataframe.  Its functionality is identical to `left_join()`.
+
+```{r}
+right_join(grocery_list, supermarket)
+
+# Same result (but different order of rows+columns):
+left_join(supermarket, grocery_list)
+```
+
+`left_join(x, y)` is identical to `right_join(y, x)`.
+
+
+### Full join
+
+`full_join()` will keep all rows in both x and y.  Imagine doing a right or left join, and just appending any extra, non-matching rows at the bottom.
+
+```{r}
+full_join(grocery_list, supermarket)
+```
+
+This is different from simply stacking the rows.
+
+```{r}
+bind_rows(grocery_list, supermarket)
+```
+
+
+### Inner join
+
+`inner_join()` is the most "selective".  It only keeps rows that appear in both datasets and it does not induce any NA values.
+
+```{r}
+inner_join(grocery_list, supermarket)
+```
+
+### Filtering joins
+
+Filtering joins decide to keep or remove rows, similar to `filter()`.  `semi_join()` returns matching rows.
+
+What items on the list can be found at the store?  The order matters here.
+
+```{r}
+grocery_list %>% 
+  semi_join(supermarket)
+
+supermarket %>% 
+  semi_join(grocery_list)
+```
+
+Notice the differences with `inner_join()`.  `inner_join()` results in a new column and `semi_join()` does not.
+
+```{r}
+inner_join(grocery_list, supermarket)
+```
+
+
+Use `anti_join()` to filter by non-matching rows.  What items on the list are not at the store?
+
+```{r}
+grocery_list %>% 
+  anti_join(supermarket)
+```
+
+What items at the store are not on my grocery list?
+
+```{r}
+supermarket %>% 
+  anti_join(grocery_list)
+```
+
+
+### Different column names
+
+How does R know how to join the dataframes?  In the supermarket example, it's easy, since both dfs have a column called `item`.
+
+We can specify this ourselves with the `by` argument.
+
+```{r}
+left_join(grocery_list, supermarket)
+```
+
+
+Let's look at `join_by()` in more detail. In the original discounts and drinks data, both have a column named `item`, which R can recognize.
+
+```{r}
+left_join(grocery_list, supermarket,
+          by = join_by(item))
+
+# More specifically: use == to connect both
+# dataframe column names
+left_join(grocery_list, supermarket,
+          by = join_by(item == item))
+```
+
+Exercise 5.3:
+
+The `drinks` dataframe contains information on a user's favorite cafes and the drinks they get at each cafe.  It also has the price of each drink and the date the user last visited.
+
+The `coupons` dataframe contains coupons from several cafes with the corresponding discount (e.g. 0.25 means 25% off) and the expiration date.
+
+- Join the dataframes together with a mutating join such that the final dataframe only has information on the user's favorite drinks.  Make sure the correct columns are joined!
+
+- Mutate an additional column for each drink's discounted price.  If there's no discount, the discounted price should be the normal price.
+
+```{r}
+drinks <- tibble(
+  Date = c("8/15", "9/7", "9/7", "8/22"),
+  Drink = c("Milk Tea", "Espresso", "Latte", "Espresso"),
+  Cafe = c("Happy Tea", "Daily Grind", "Daily Grind", "Bev's Beverages"),
+  Price = c(6, 4, 5, 5)
+)
+
+coupons <- tibble(
+  Discount = c(0.25, 0.5, 0.05),
+  Date = c("9/30", "10/31", "10/15"),
+  Location = c("Happy Tea", "Daily Grind", "The Roast")
+)
+
+
+```
+
+
+```{r}
+drinks %>%
+  left_join(coupons, by = join_by(Cafe == Location)) %>%
+  mutate(Discount_Price = case_when(
+    !is.na(Discount) ~ Price * (1 - Discount),
+    .default = Price
+  )) %>%
+  relocate(Discount_Price)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
