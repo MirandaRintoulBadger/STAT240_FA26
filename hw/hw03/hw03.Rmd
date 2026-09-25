@@ -1,0 +1,220 @@
+---
+title: "Homework 3"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw03` on your local computer.
+- You should also download `exoplanets-clean-through-2022.csv`, `education_long.csv`, and `obesity.csv` to `STAT240/data` on your local computer.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+The dataset `exoplanets-clean-through-2022.csv` stores information on exoplanets discovered from 1992-2022.  Each row is a planet, with columns for the planet name, mass and radius (if possible), star, year discovered, and method of discovery.
+
+```{r, echo = FALSE}
+planets <- read_csv("../../data/exoplanets-clean-through-2022.csv")
+```
+
+Starting from `planets`:
+
+- Keep only planets discovered by the `method` "Radial Velocity".
+
+- Keep only rows whose `mass` and `radius` are both known. (e.g. they are not missing.)
+
+- `group_by()` and `summarize()` the data, such that:
+    - You get one row per year.
+    - You create the columns `n_discovered` and `minimum_mass`, which contain the number of planets discovered in that year, and the smallest mass among planets discovered in that year.
+
+- Save this dataframe with the name `mass_by_year`. Then, on a separate line, let `mass_by_year` be shown as output so we can see the first ten rows in your knitted file.
+
+Do not overwrite the object `planets`!
+
+Your first two rows should look like this if you did it correctly:
+
+```
+    year n_discovered minimum_mass
+   <dbl>        <int>        <dbl>
+ 1  1999            1       232.  
+ 2  2001            1      1392.  
+```
+
+
+# Problem 2
+
+Using `mass_by_year` from the previous problem, create a scatter plot of `minimum_mass` on the y axis versus `year` on the x axis.
+
+Incorporate the following customizations:
+
+- Map the `size` of the points to `n_discovered`.
+
+- Apply the `log10` transformation to the y-axis.
+    - This can be done by adding `scale_y_log10()` as a layer to your plot, which is a shortcut for `scale_y_continuous(trans = "log10")`.
+
+- Add an informative legend title and y axis label.
+
+
+# Problem 3
+
+Starting from `planets`, print out the planet name, mass, radius, and density of the top five most dense planets.
+
+The density of a planet is its mass divided by its volume.
+
+The volume of a planet is $\frac{4}{3} \times \pi \times \text{radius}^3$. Note that `pi` is a constant bult into R that you may use.
+
+
+# Problem 4
+
+Problems 4 and 5 take you through a relatively complex analysis process to figure out how the most popular planet discovery methods have changed over time.
+
+---
+
+Starting from `planets`,
+
+- Keep only the planets discovered by the `method`s "Imaging", "Microlensing", "Radial Velocity", or "Transit".
+
+- Keep only the planets discovered in 2000 or later.
+
+- Count how many times each remaining `method` was used within each `year`.
+    - This will require you to `group_by()` both `method` and `year` at the same time.
+
+- Sort the rows such that the earliest year is first, and the most recent year is last.
+
+- Save this dataframe with the name `methods_within_year`, and then let `methods_within_year` be printed as output so the first ten rows are visible in your .html file.
+
+The top of `methods_within_year` should look similar to this (column order does not matter).
+
+```
+# A tibble: 78 × 3
+    year method              n
+   <dbl> <chr>           <int>
+ 1  2000 Radial Velocity    16
+ 2  2001 Radial Velocity    12
+ 3  2002 Radial Velocity    28
+ 4  2002 Transit             1
+```
+
+
+# Problem 5
+
+Starting from `methods_within_year` from problem 6 above,
+
+- Grouping by year, add a column called `yearTotal`. `yearTotal` should indicate how many planets were discovered within that year across all methods.
+    - Here's the first four rows to check your work against:
+    
+```
+    year method              n yearTotal
+   <dbl> <chr>           <int>     <int>
+ 1  2000 Radial Velocity    16        16
+ 2  2001 Radial Velocity    12        12
+ 3  2002 Radial Velocity    28        29
+ 4  2002 Transit             1        29
+```
+
+- Now, add another column called `methodProportion`, which determines what percentage of the discoveries within that year were by that method.
+    - Here's what `methodProportion` should look like:
+    
+```
+    year method              n yearTotal methodProportion
+   <dbl> <chr>           <int>     <int>            <dbl>
+ 1  2000 Radial Velocity    16        16           1     
+ 2  2001 Radial Velocity    12        12           1     
+ 3  2002 Radial Velocity    28        29           0.966 
+ 4  2002 Transit             1        29           0.0345
+```
+
+Let the first few rows be printed as output in your knitted file.
+
+
+# Problem 6
+
+Consider comparing the rate of obesity with the rate of bachelor's degree attainment in different Wisconsin counties.  We'll use datasets `education_long.csv`, which is already cleaned, and `obesity.csv`, which you'll need to tidy.
+
+```{r}
+education <- read_csv("../../data/education_long.csv")
+obesity <- read_csv("../../data/obesity.csv")
+```
+
+Right now, the `obesity` data has one row for every zip-sex-age group combination; age groups are 5 years old - 17 years old, 18-34, 35-54, 55-74, and 75+.
+
+We want to obtain a version of the `obesity` dataset we can merge with `education` above; so both datasets would have to have one row for every zip-sex combination.
+
+This means we need to `summarize()` the obesity dataset to obtain one row per zip-sex combination, purposefully "smoothing over" all the age group detail we currently have.
+
+---
+
+Create a new dataset called `obesity_summary` by executing the following steps:
+
+- Start from `obesity`.
+
+- Remove all rows with data about the youngest age group (05-17), since the `education` dataset is only about adults.
+
+- Within each row, calculate the estimated obesity rate, `est_obese_rate`, by taking `obese/n`. (`n` is the number of people we have data for; `pop` is the total population, so `obese/n` is just an estimate)
+
+- Within each row, calculate `est_obese_pop` by taking `est_obese_rate * pop`.  We are estimating the true obese population by multiplying a sample obesity rate times the full population.
+
+- Group and summarize the data, such that you obtain one row per zip-sex combination (like in `education`), with the information:
+    - Total population within that zip-sex combination: call this `total_pop`
+    - Total obese population (estimated) within that zip-sex combination: call this `est_total_obese_pop`.
+    
+    - Note that you will have to use `na.rm = T` when summarizing to avoid NAs.
+    
+- Remove all rows where there are 0 estimated obese individuals. (Optional question: Why didn't we just do this at the beginning?)
+
+Let the first few rows be printed as output in your knitted file. If done correctly, your first few rows should look like this:
+
+```
+     zip sex    total_pop      est_total_obese_pop
+   <dbl> <chr>      <dbl>                    <dbl>
+ 1 53001 female       726                   259.02
+ 2 53001 male         755                   330.63
+ 3 53002 female       977                   369.63
+ 4 53002 male        1052                   404.50
+```
+
+
+# Problem 7
+
+Create a new dataframe called `joined` by joining `education` and `obesity_summary` and only keeping rows that match in *both* dataframes.  The dataframes should be joined by sex and zip code (note that the names for the zip code variable are different in theh two datasets)
+
+Your first four rows of `joined` should look like this:
+
+```
+  zip_code sex    pct_bachelors total_pop est_total_obese_pop
+     <dbl> <chr>          <dbl>     <dbl>               <dbl>
+1    53001 male            13         755                330.
+2    53001 female          23         726                259.
+3    53002 male            16.2      1052                404.
+4    53002 female          25.4       977                369.
+```
+
+
+# Problem 8
+
+Using `joined` from the previous problem, create a scatter plot of points with `pct_bachelors` on the x-axis and percentage obese on the y axis. You will have to calculate percentage obese for this problem.
+
+Incorporate the following customizations:
+
+- Color the points by sex.
+- Improve the labels of the x axis, y axis, and legend.
+- Use `geom_smooth()` to add a single smooth line showing the trend of the data. (You should not have two different lines by sex!)
+
+What does this graph tell you about the relationship between college education rates and obesity rates?
