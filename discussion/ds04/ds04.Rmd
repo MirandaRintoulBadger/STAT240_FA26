@@ -1,0 +1,143 @@
+---
+title: "Discussion 4"
+author: "Group Member Names Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds04`.
+- The file `food_donations.csv` should be in `STAT240/data`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to use the `dplyr` data manipulation tools to answer a variety of different questions with the same starting dataset.
+
+The animals of the UW-Madison Arboretum have collectively contributed to a winter food stockpile.  The dataset `food_donations` has one row per food contribution, with the following columns:
+
+- `id`: a unique identifier for the food donation
+- `name`: name of the individual making the donation
+- `species`: species of the individual making the donation
+- `species_diet`: the diet of the species, either herbivore or omnivore
+- `food_type`: type of food donated
+- `weight`: weight of food donated, in pounds
+- `calories`: estimated calories contained in the donation
+- `spoilage_time`: estimated number of days until the donated food spoils
+
+The code below reads in the data and shows the first few rows.
+
+```{r}
+## This assumes that:
+### STAT240/data/ contains the data file
+### STAT240/discussion/ds04/ is your working directory.
+
+donations <- read_csv("../../data/food_donations.csv")
+
+head(donations)
+```
+
+Now, it's time for the food to be distributed according to who made the best contributions.  
+
+Your group can either vouch for the **herbivores** or the **omnivores**.  For each of the following problems, complete the first step, then complete the sub-problem that corresponds to your chosen animal group.  The sub-problems will have less explicit guidance.
+
+
+# Problem 1
+#### (approx. 5 minutes)
+
+How filling is the food that was donated?
+
+Use `mutate` to add a new column to the data for the calorie density of each donation, measured as calories per 100 grams.  Use the conversion 1 pound = 454 grams.
+
+
+# Problem 2
+#### (approx. 15 minutes)
+
+Which group acted more generously in terms of the number of donations?
+
+Start by making a dataset that records the total number of donations per individual.
+
+- First, use `group_by()` to perform calculations for each individual.  To ensure that `species_diet` and `species` are present in the final dataset, you'll need to group by multiple columns.
+- Next, use `summarize()` to count the total number of donations per individual.
+- Save this dataframe as `donations_summary`.
+
+
+The first few rows of the dataframe should look like this:
+```
+# Groups:   species_diet, species [7]
+   species_diet species name     total_donations
+   <chr>        <chr>   <chr>              <int>
+ 1 herbivore    beaver  Flapjack               4
+ 2 herbivore    beaver  Ginger                 3
+ 3 herbivore    beaver  Marco                  3
+ 4 herbivore    mouse   Abel                   8
+```
+
+
+## Herbivores
+
+Use `donations_summary` to show that the herbivores made a greater number of donations on average *per species*.  This one is tricky - you'll need to use multiple calls to `group_by()` and `summarize()` to first perform calculations at the species level, then at the herbivore/omnivore level.
+
+
+## Omnivores
+
+Use `donations_summary` to show that the omnivores made a greater number of donations on average *per individual*.
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Which group contributed the most to food that will last a long time?
+
+Let's make a smaller dataset that only contains donations that will last at least a month.
+- Use `filter()` to keep only the donations expected to last 30 days or more.
+- Save this dataframe as `long_term_donations`.
+
+The dataframe `long_term_donations` should have 126 rows. 
+
+
+## Herbivores
+
+Use `long_term_donations` to show that the herbivores' long-term donations are, on average, more calorie dense than the omnivores' long-term donations.
+
+
+## Omnivores
+
+Use `long_term_donations` to show that 7 out of 10 of the largest long-term donations (by weight) were made by omnivores.
+
+
+# Problem 4
+#### (approx. 15 minutes)
+
+Which group contributed the greatest variety of food?
+
+The code below creates a new dataset, `donations_by_type`, which records the number of herbivore, omnivore, and total donations for each of the food types.  We'll learn more about the command `pivot_wider()` in a later lecture.
+
+```{r}
+donations_by_type <- donations %>%
+  group_by(food_type, species_diet) %>%
+  summarize(n = n()) %>%
+  pivot_wider(names_from = species_diet, values_from = n,
+              values_fill = 0) %>%
+  mutate(total = herbivore + omnivore)
+
+donations_by_type
+```
+
+
+## Herbivores
+
+Use `donations_by_type` to show that the herbivores made most of the donations for the majority of the different food types.  There are a number of ways to do this, but you can consider making a new column indicating whether the herbivores or omnivores made the majority of donations.
+
+
+## Omnivores
+
+Use `donations_by_type` to show that the omnivores contributed a greater number of unique food types.  This one is tricky - you may find it difficult to complete this problem only using `dplyr`.  Consider doing some initial manipulation with `dplyr`, then finishing the problem with a few base R manual calculations.
+
+
+
