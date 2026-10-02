@@ -1,0 +1,179 @@
+---
+title: "Homework 4"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw04` on your local computer.
+- You should also download `ships.csv` to `STAT240/data` on your local computer.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+The `ships` dataset from R package MASS gives information on the number of damage incidents and several other variables for 40 ships. The columns are:
+
+- `type`: "A" to "E"
+- `year` of construction: 1960–64, 65–69, 70–74, 75–79
+- `period` of operation: 1960–74, 75–79
+- `service`: aggregate months of service
+- `incidents`: number of damage incidents
+
+```{r}
+ships <- read_csv("../../data/ships.csv")
+```
+
+Consider performing a resampling experiment to study the average number of damage incidents in 40 ships.  
+
+(a) Create a histogram of the number of damage incidents for the 40 ships in the data.  What do you notice about the shape of the data?
+
+(b) Approximate the sampling distribution of the mean number of damaging incidents in 40 ships.  Do this by resampling from the `ships` data 10000 times.  The `new_data()` command from lecture is provided for you.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+(c) Create a histogram of the 10000 sample means found in (b), and comment on its shape.  How does it compare to the histogram of the raw data?
+
+(d) Re-create the plot in (c), but use `geom_density()` instead of `geom_histogram()`.  What type of plot is this?  How is it similar to the histogram, and how is it different?
+
+
+# Problem 2
+
+Continue working with the `ships` data from problem 1.  Now, perform a resampling experiment to study the *median* number of damage incidents in 40 ships. 
+
+(a) Approximate the sampling distribution of the median number of damaging incidents in 40 ships.  Do this by resampling from the `ships` data 10000 times.  You can use the `new_data()` function from above.  Then, build and interpret a histogram of the sample medians.
+
+(b) Do you think the mean or the median is a better metric to summarize "number of damaging incidents"?  Explain your answer.
+
+(c) Also create a density plot with `geom_density()` for the sample medians.  Is it appropriate to use a density plot for the sample medians?  Why does a density plot work better for the mean (in problem 1(d)) than the median?
+
+
+# Problem 3
+
+The built-in dataset `warpbreaks` records the strength of two types of `wool` (A and B) in weaving.  The variable of interest is `breaks`, the number of breaks in the yarn when woven on a loom. For this problem, we can ignore the `tension` column.
+
+Which has the smallest average number of breaks - yarn A, or yarn B?
+
+(a) Calculate the average number of breaks for yarn A and B, as well as the observed difference in means ($\bar{x}_A - \bar{x}_B$).
+
+(b) Assume that A and B are equally likely to break. Approximate the sampling distribution of the *difference in average breaks* by resampling.  Do this by resampling a new group A and group B from the "big box" of all observations, and calculate the difference in means for all 10000 resamples.
+
+(c) Create a histogram of the resampled differences in (b).  Use `geom_vline()` to add a vertical line at the observed difference you calculated in (a).  Does it seem like yarns A and B have the same average number of breaks?  (You don't need to draw a formal statistical conclusion, just give a visual interpretation of your histogram and the vertical line at the observed difference.)
+
+
+# Problem 4
+
+Continue working with the `warpbreaks` data.
+
+(a) Repeat the resampling experiment as in problem 3(b), but do not assume A and B come from the same population.  Instead, resample a new group A from the original group A data, and likewise for group B.  As before, calculate the difference in means for all 10000 resamples.
+
+(b) Create a histogram of the resampled differences in (a).  How does this histogram compare to the one in problem 3(c)?  Consider both the location and spread of the two histograms.
+
+
+# Problem 5
+
+The R code below creates a histogram showing the distribution of the number of pets per household.
+
+```{r}
+ggplot(mapping = aes(x = 0:4, y = c(0.3, 0.35, 0.15, 0.15, 0.05))) +
+  geom_col() +
+  theme(axis.title = element_blank())
+```
+
+Consider taking a sample from this population and calculating the total, mean, or median.  Match the five descriptions below to the correct sampling distribution histogram in `p5_choices.png`.  Briefly justify each of your choices.
+
+- The average number of pets in a sample of 10 households.
+
+- The average number of pets in a sample of 20 households.
+
+- The total number of pets in a sample of 10 households.
+
+- The median number of pets in a sample of 6 households.
+
+- The median number of pets in a sample of 10 households.
+
+
+# Problem 6
+
+The **median absolute deviation** (MAD) is a measure of spread based on the median, similar to how the standard deviation is based on the mean.  The MAD of some data $X$ is found by taking the absolute deviation from each data point to the median:
+
+$$|X_i - Med(X)|$$
+
+then finding the median of those absolute deviations:
+
+$$MAD = Med(|X_i - Med(X)|)$$
+
+We'll demonstrate this measure with this fictional dataset of reaction times (in milliseconds)
+
+```{r}
+reaction_times <- tibble(
+  participant = 1:20,
+  time = c(708, 510, 742, 720, 298,
+           426, 339, 1638, 675, 1255,
+           555, 353, 590, 339, 688,
+           567, 809, 912, 1032, 450)
+)
+```
+
+(a) Create a histogram of reaction times.
+
+(b) Calculate the MAD of the reaction times by using the `median()` and `abs()` commands.  Use the `mad()` code with `constant = 1` to verify your answer.
+
+```{r}
+mad(reaction_times$time, constant = 1)
+```
+
+(c) Approximate the sampling distribution of the MAD of reaction times.  Do this by resampling from the `reaction_times` data 10000 times. Then, build a histogram of the sample MADs.
+
+(d) Why might a measure of spread like the MAD be preferred over standard deviation?
+
+
+# Problem 7
+
+We have seen examples of resampling numeric data to study the mean or median.  Now, consider resampling to study a binary outcome. 
+
+In a sample of 1014 measles cases, 142 (14%) were vaccinated against measles, and 872 (86%) were not.  Is this result noteworthy?  We need to compare this against the vaccination rate of the general population, which is 92%.
+
+(a) The R code below gathers a sample of size 1014 from a population of individuals with a 50% vaccination rate.  It returns a vector of 0's and 1's, where 0 represents an unvaccinated individual and 1 represents a vaccinated individual.
+
+Edit the code so that it represents a sample from a population with a 92% vaccination rate, and then use the `mean()` function to calculate the proportion of vaccinated individuals in the sample.
+
+```{r}
+vaccination_status <- sample(0:1, size = 1014, replace = TRUE,
+       prob = c(0.5, 0.5))
+```
+
+(b) Perform a resampling experiment from your population data to simulate the proportion of vaccinated invidivuals in a random sample 10000 times.  You'll need to `replicate()` the mean calculation you did in part (a).
+
+
+# Problem 8
+
+Continue working with the measles vaccination example.
+
+(a) Create a histogram of the sample proportions calculated in problem 7(b).  If this is done correctly, you should see a histogram centered approximately at x = 0.92.  Also use `geom_vline()` to draw a vertical line at x = 0.14, the vaccination rate among measles patients.
+
+(b) Based on your histogram, is it reasonable that a vaccination rate of 14% could have been sampled randomly from the population?  (You don't need to draw a formal statistical conclusion, just give a visual interpretation of your histogram and the vertical line at x = 0.14.)
+
+
+
+
