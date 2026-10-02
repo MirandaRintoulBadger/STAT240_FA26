@@ -1,0 +1,290 @@
+---
+title: "Section 6: Simulation and Resampling"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Probability simulations
+
+Let's simulate 10000 rolls of a fair six-sided die.
+
+```{r}
+dice_example <- tibble(rolls = sample(1:6,
+                                      size = 10000,
+                                      replace = T))
+
+dice_example
+```
+
+The barplot of counts looks roughly flat, and the simulated average is close to the theoretical average.
+
+```{r}
+ggplot(dice_example, aes(x = rolls)) +
+  geom_bar(fill = "goldenrod2", color = "black")
+```
+
+```{r}
+mean(dice_example$rolls)
+```
+
+
+What about something that's difficult or annoying to study analytically?
+
+The custom function below, `generate_score()`, randomly generates a strength score for a D&D character by rolling four six-sided dice and taking the sum of the highest three.
+
+```{r}
+generate_score <- function() {
+  rolls <- sample(1:6, 4, replace = TRUE)   # Roll dice
+  keep <- sort(rolls)[2:4]       # Keep highest 3 rolls
+  sum(keep)
+}
+```
+
+This function is random, and it will return a different result each time.  
+
+```{r}
+generate_score()
+```
+
+By sampling many, many, times, we can create an empirical/simulated histogram of possible strength scores.
+
+```{r}
+strength_values <- tibble(
+  run = 1:10000,
+  values = replicate(10000, generate_score())
+)
+
+ggplot(strength_values, aes(x = values)) +
+  geom_histogram(binwidth = 1, boundary = 2.5,
+                 fill = "goldenrod2", color = "black")
+```
+
+We can also get a mean, median, standard deviation, and IQR from the simulated values.
+
+```{r}
+strength_values %>%
+  summarize(avg_strength = mean(values),
+            med_strength = median(values),
+            sd_strength = sd(values),
+            iqr_strength = IQR(values))
+```
+
+Now, consider generating all six scores for a character.
+
+```{r}
+all_character_scores <- function(){
+  setNames(replicate(n = 6, generate_score()),
+           c("STR", "DEX", "CON", "INT", "WIS", "CHA"))
+}
+```
+
+```{r}
+my_stats <- all_character_scores()
+
+my_stats
+```
+
+What is this character's average score?
+
+```{r}
+mean(my_stats)
+```
+
+EX 6.1
+
+```{r}
+# Some code to get you started.
+# What process are we repeating?
+
+average_scores <- tibble(
+  run = 1:10000,
+  values = replicate(10000, mean(all_character_scores())) 
+)
+
+average_scores
+```
+
+```{r}
+ggplot(average_scores, aes(x = values)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+
+
+In statistics (unlike D&D scores), the process to generate data is unknown.  Let's consider the population of flipper lengths for all Adelie penguins.
+
+We don't have this population - only a sample of size 146.
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv") %>%
+  relocate(flipper_length_mm, .after = species)
+
+adelie <- penguins %>% filter(species == "Adelie")
+```
+
+This data has a sample mean of 190.1 mm.  But is this a good representation of the *true* mean?
+
+```{r}
+adelie %>%
+  summarize(mean_flip_len = mean(flipper_length_mm))
+```
+
+How can we learn about the population via resampling, if we only have 146 observations?
+
+The data represents the population.  So, by resampling from this data with `sample_n`, we are approximating a sample from the full population.
+
+```{r}
+sample_n(adelie, size = 146, replace = TRUE)
+```
+
+
+```{r}
+ggplot(adelie, aes(x = flipper_length_mm)) +
+  geom_histogram()
+```
+
+
+Each time we resample from the data, we calculate a new mean flipper length.
+
+```{r}
+resample <- sample_n(adelie, size = 146, replace = TRUE)
+
+resample %>%
+  summarize(mean_flip_len = mean(flipper_length_mm))
+```
+
+Here's the same code, wrapped in a function.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+
+new_data(adelie, 146)
+```
+
+Now, let's replicate this to simulate 10000 different penguin studies.
+
+```{r}
+average_lengths <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(adelie, 146)$flipper_length_mm) ) 
+)
+
+
+average_lengths
+```
+
+We can calculate graphical and numeric summaries of these simulated x-bars. 
+
+```{r}
+ggplot(average_lengths, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+```{r}
+adelie %>%
+  summarise(avg_length = mean(flipper_length_mm),
+            sd_length = sd(flipper_length_mm))
+
+average_lengths %>%
+  summarize(xbar_mean = mean(xbars),
+            xbar_sd = sd(xbars),
+            xbar_IQR = IQR(xbars))
+```
+
+We can also compare this to the original flipper length data.
+
+```{r}
+adelie %>%
+  summarize(flip_mean = mean(flipper_length_mm),
+            flip_sd = sd(flipper_length_mm),
+            flip_IQR = IQR(flipper_length_mm))
+```
+
+
+EX 6.3
+
+Now, repeat the resampling, but study the median of Gentoo penguin flipper lengths instead of the mean of Adelie penguin flipper lengths.  You can copy/paste most of the code from above and use the new_data() function from before.
+
+```{r}
+gentoo <- penguins %>% filter(species == "Gentoo")
+
+gentoo %>%
+  summarize(med_length = median(flipper_length_mm))
+```
+
+```{r}
+median_lengths <- tibble(
+  run = 1:10000,
+  medians = replicate(10000,
+                    median(new_data(gentoo, 119)$flipper_length_mm) ) 
+)
+
+median_lengths
+```
+
+```{r}
+ggplot(median_lengths, aes(x = medians)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+
+## Resampling two populations
+
+Now, consider comparing the median body mass for male vs female Adelie penguins.
+
+```{r}
+adelie %>%
+  group_by(sex) %>%
+  summarize(mass_med = median(body_mass_g), n = n())
+```
+
+If we assume the median body mass is the same for both groups, we can treat the entire population of male+female penguins as a "big box" for resampling.
+
+```{r}
+new_female_med <- median(new_data(adelie, 73)$body_mass_g)
+new_male_med <- median(new_data(adelie, 73)$body_mass_g)
+
+new_female_med - new_male_med
+```
+
+Let's repeat this 10000 times.
+
+```{r}
+median_diffs <- tibble(
+  run = 1:10000,
+  female = replicate(10000,
+                    median(new_data(adelie, 73)$body_mass_g) ),
+  male = replicate(10000,
+                    median(new_data(adelie, 73)$body_mass_g) ),
+  diff = female - male
+)
+
+median_diffs
+```
+
+```{r}
+ggplot(median_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+The actual, observed difference in medians (female - male) is -600.  Let's compare that to our histogram.
+
+```{r}
+ggplot(median_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = -600,
+             color = "forestgreen", linewidth = 1.5)
+```
+
+
