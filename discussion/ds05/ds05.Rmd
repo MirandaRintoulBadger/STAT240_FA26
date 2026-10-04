@@ -1,0 +1,106 @@
+---
+title: "Discussion 5"
+author: "Group Member Names Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+# Preliminaries
+
+-   This file should be in `STAT240/discussion/ds05`.
+-   This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to develop a stronger conceptual understanding of sampling distributions and simulation.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+The trading-card-game "WOW! WIZARD BATTLE!" is sold in packs of 15 randomized playing cards. $X$, the number of legendary wizard cards per pack, is random and has the following distribution.
+
+```{r}
+values <- 0:3
+probs <- c(0.4, 0.4, 0.15, 0.05)
+
+ggplot(mapping = aes(x = values, y = probs)) +
+  geom_col() +
+  geom_text(aes(label = probs, x = values, y = probs+0.02)) +
+  labs(x = "Number of Legendary Cards", y = "Probability")
+```
+
+
+
+Early in the day, a customer purchases 40 card packs from a store.  Later, another customer visits the same store and purchases the remaining 5 card packs.
+
+(a) Match the six descriptions below to the appropriate sampling distribution histogram given in `ds05_histograms.png`.
+
+- The average number of legendary wizards per pack across 5 packs
+- The average number of legendary wizards per pack across 40 packs
+- The total number of legendary wizards in 5 packs
+- The total number of legendary wizards in 40 packs
+- The minimum number of legendary wizards in a pack across 5 packs
+- The median number of wizards per pack across 40 packs
+
+(b) Which sampling distributions are symmetric, and why?
+
+(c) The customers each want to use their respective sample to estimate the probability of getting 1 legendary card in a pack. (We know that it's 0.4, but the customers don't know that!)  Without doing any calculation, which of the two customers will have less error in their estimation of this probability?
+
+
+# Problem 2
+#### (approx. 15 minutes)
+
+The `sprint` dataframe defined below gives the sprinting speed (in mph) of 25 random 21-30 year old women.  The histogram, sample mean, and sample SD of sprint speeds are also given to you.
+
+```{r}
+sprint <- tibble(
+  participant = 1:25,
+  speed = c(10.0, 14.8, 12.1, 13.5, 9.8, 9.9, 15.3, 11.2,
+            10.5, 11.8, 11.3, 10.1, 9.3, 12.5, 12.7, 16.2,
+            15.3, 14.2, 13.8, 12.7, 12.0, 10.2, 18.3, 15.9, 12.5)
+)
+
+ggplot(sprint, mapping = aes(x = speed)) +
+  geom_histogram(binwidth = 1) +
+  labs(x = "Sprinting Speed (mph)")
+
+sprint %>%
+  summarize(avg_speed = mean(speed),
+            sd_speed = sd(speed))
+```
+
+(a) Each group member should separately resample 25 observations from the `sprint` dataframe, and recalculate the sample SD from those 25 resampled observations.  You can use the `new_data()` function below.  Your group should be left with 3-4 different values of sample SD.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+(b) Based on the 3 or 4 different values of sample SD, what do you think counts as a "typical" value for sample SD?  In this context, how much do you think the sample SD will vary from sample to sample?
+
+(c) Perform a resampling experiment with the `replicate()` function to study the sampling distribution of the SD.  Do not do 10000 replications - for this part, only do 100 replications.  Create a histogram of the 100 sample SDs, and also calculate the average and standard deviation of the 100 sample SDs.
+
+(d) Repeat part (c), but do an experiment with 1000 replications and finally an experiment with 10000 replications.  Create a histogram and calculate the numeric summaries for each.
+
+For all parts of (c) and (d), make sure you are always resampling 25 rows at each step.
+
+(e) What do you notice as you increase the number of resamples?  Why is it necessary to produce a large number of resamples when studying the sampling distribution of a statistic?
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Continue working with the `sprint` data from problem 2.
+
+(a) Perform a resampling experiment with 10000 resamples to study the *sample maximum* of the data.  Create a histogram of the 10000 sample maximums and comment on its shape.  Also calculate the average value of these sample maximums.
+
+(b) The sample maximum is an example of a statistic with **negative bias** - it systematically underestimates the true maximum.  Based on your histogram, explain how the *resampled maximum* underestimates the *data maximum* of 18.3.
+
+(c) Using a similar line of reasoning to (b), explain how the *data maximum* of 18.3 is most likely an underestimate of the true population maximum sprinting speed for this group of women.
+
+
