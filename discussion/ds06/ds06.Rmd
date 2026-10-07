@@ -1,0 +1,100 @@
+---
+title: "Discussion 6"
+author: "Group Member Names here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+-   This file should be in `STAT240/discussion/ds06`.
+-   This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to think about different hypothesis testing errors in context, and try to generalize the methods in lecture to think about a difference in proportions.
+
+
+# Problem 1
+#### (approx. 10 minutes)
+
+In statistical testing, the significance level $\alpha$ can also be thought of as the "false positive" error rate, which is the probability that we incorrectly reject the null when the null is actually true.  This is in contrast to a "false negative" error, where we incorrectly fail to reject the null when the alternative is true.  These are called type I and type II errors.
+
+- Type I error: the null is actually true, but we reject it (happens with probability $\alpha$)
+- Type II error: the null is actually false, but we fail to reject it
+
+We control these error rates by setting a larger or smaller $\alpha$.
+
+(a) For each of the following scenarios, write appropriate null and alternative hypotheses in context.  Explain what a type I and type II error would mean, and make an argument for which type of error would be worse.  The first prompt is done for you as an example.
+
+- (a.i) We are using a swab to detect whether is currently infected with COVID-19.
+
+*Null: the person is healthy; Alternative: the person has covid.*
+*Type I error: the person is actually healthy, but the swab returns positive.*
+*Type II error: the person actually has covid, but the swab returns negative.*
+*I think a type II error would be worse, since the person would mistakenly believe themselves to be healthy and might accidentally spread the disease to others.*
+
+- (a.ii) A jury is deciding whether to convict a defendant of a serious crime.
+
+- (a.iii) An alarm is set to sound in the event of a fire.
+
+- (a.iv) A clinical trial is run for a new pain medication to see if it is more effective than a placebo.
+
+(b) If we want to avoid making a type I error, should we choose a large or small $\alpha$, and why?
+
+(c) If we want to avoid making a type II error, should we choose a large or small $\alpha$, and why?
+
+
+# Problem 2
+#### (approx. 25 minutes)
+
+Consider applying our hypothesis testing and confidence interval techniques to study a *difference* in proportions for a binary outcome.
+
+In a sample of 50 juniors, 30 (60%) said they felt like they were getting enough sleep.  In a different sample of 50 seniors, 27 (54%) said they felt like they were getting enough sleep.  Consider the difference 
+$$p_{J} - p_{S}$$ 
+where $p_{J}$ is the true proportion of juniors who feel they are getting enough sleep and $p_{S}$ is the true proportion of seniors who feel they are getting enough sleep.
+
+(a) We want to perform a two-sided hypothesis test of 
+
+$$H_0: p_{J} - p_{S} = 0 \quad \text{versus} \quad H_A: p_{J} - p_{S} \neq 0$$
+
+at the 2% significance level.  We want to perform a resampling experiment to simulate the null hypothesis by re-sampling two groups that share the same underlying proportion.  What should we use as the null proportion $p$, the common/shared probability of getting enough sleep?
+
+(b) The code below performs a resampling experiment on the difference between two group proportions, assuming that both groups have a 50% chance of success.  Update the code to represent the null probability you found in (a), and then calculate a two-sided p-value based on the observed difference of $0.6 - 0.54 = 0.06$.  Draw a conclusion in context.
+
+```{r}
+# Change the "prob" argument from c(0.5, 0.5) to whatever you found in (a)
+
+sleep_proportions_null <- tibble(
+  juniors = replicate(10000,
+                      mean(sample(0:1, size = 50, replace = T,
+                                  prob = c(0.5, 0.5)))),
+  seniors = replicate(10000,
+                      mean(sample(0:1, size = 50, replace = T,
+                                  prob = c(0.5, 0.5)))),
+  diff = juniors - seniors
+)
+
+```
+
+(c) Perform another resampling experiment to create a 98% confidence interval for the true difference in proportions.  Use the usual resampling interval formula
+
+$$(2M_{obs} - M_{upper}, \; 2M_{obs} - M_{lower})$$
+
+where in this case $M$ refers to the difference in proportions.  Also interpret your confidence interval.  What do we have to change in the resampling experiment compared to part (b)?
+
+(d) Does your interval cross the value 0?  How does this relate to the result of your hypothesis test in (b)?
+
+---
+
+# Midterm
+
+Use the remaining time in discussion to work on writing your cheat sheet for the midterm.  You can bring a standard sheet of paper with anything you want written on both sides, and you are welcome to work with others to decide what you want to put on your sheet.
+
+The midterm will cover R and resampling concepts, which is homeworks 1-5 and discussions 1-6.
+
+
