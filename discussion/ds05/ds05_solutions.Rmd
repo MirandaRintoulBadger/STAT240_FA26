@@ -1,0 +1,223 @@
+---
+title: "Discussion 5"
+author: "Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+
+# Preliminaries
+
+-   This file should be in `STAT240/discussion/ds05`.
+-   This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to develop a stronger conceptual understanding of sampling distributions and simulation.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+The trading-card-game "WOW! WIZARD BATTLE!" is sold in packs of 15 randomized playing cards. $X$, the number of legendary wizard cards per pack, is random and has the following distribution.
+
+```{r, echo=F}
+theme_set(old)
+```
+
+```{r}
+values <- 0:3
+probs <- c(0.4, 0.4, 0.15, 0.05)
+
+ggplot(mapping = aes(x = values, y = probs)) +
+  geom_col() +
+  geom_text(aes(label = probs, x = values, y = probs+0.02)) +
+  labs(x = "Number of Legendary Cards", y = "Probability")
+```
+
+
+
+Early in the day, a customer purchases 40 card packs from a store.  Later, another customer visits the same store and purchases the remaining 5 card packs.
+
+(a) Match the six descriptions below to the appropriate sampling distribution histogram given in `ds05_histograms.png`.
+
+- The average number of legendary wizards per pack across 5 packs [Histogram IV]{.soln}
+- The average number of legendary wizards per pack across 40 packs [Histogram VI]{.soln}
+- The total number of legendary wizards in 5 packs [Histogram V]{.soln}
+- The total number of legendary wizards in 40 packs [Histogram I]{.soln}
+- The minimum number of legendary wizards in a pack across 5 packs [Histogram III]{.soln}
+- The median number of wizards per pack across 40 packs [Histogram II]{.soln}
+
+(b) Which sampling distributions are symmetric, and why?
+
+[The total and average number of legendary wizards across 40 packs both look relatively symmetric.  This is because a large sample size causes the result to "average out" to the middle and occasionally result in a larger or smaller result.]{.soln}
+
+(c) The customers each want to use their respective sample to estimate the probability of getting 1 legendary card in a pack. (We know that it's 0.4, but the customers don't know that!)  Without doing any calculation, which of the two customers will have less error in their estimation of this probability?
+
+[The customer who opened 40 packs will have a much more precise estimate and less error than the customer who only opened 5 packs.  A larger sample size means that our estimation error goes down. ]{.soln}
+
+
+# Problem 2
+#### (approx. 15 minutes)
+
+The `sprint` dataframe defined below gives the sprinting speed (in mph) of 25 random 21-30 year old women.  The histogram, sample mean, and sample SD of sprint speeds are also given to you.
+
+```{r}
+sprint <- tibble(
+  participant = 1:25,
+  speed = c(10.0, 14.8, 12.1, 13.5, 9.8, 9.9, 15.3, 11.2,
+            10.5, 11.8, 11.3, 10.1, 9.3, 12.5, 12.7, 16.2,
+            15.3, 14.2, 13.8, 12.7, 12.0, 10.2, 18.3, 15.9, 12.5)
+)
+
+ggplot(sprint, mapping = aes(x = speed)) +
+  geom_histogram(binwidth = 1) +
+  labs(x = "Sprinting Speed (mph)")
+
+sprint %>%
+  summarize(avg_speed = mean(speed),
+            sd_speed = sd(speed))
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+(a) Each group member should separately resample 25 observations from the `sprint` dataframe, and recalculate the sample SD from those 25 resampled observations.  You can use the `new_data()` function below.  Your group should be left with 3-4 different values of sample SD.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+```{r, class.source="rsoln", class.output="rsoln", eval=F}
+sd(new_data(sprint, 25)$speed)
+```
+
+(b) Based on the 3 or 4 different values of sample SD, what do you think counts as a "typical" value for sample SD?  In this context, how much do you think the sample SD will vary from sample to sample?
+
+[Based on three resamples, I got sample SD values of 2.25, 2.54, and 2.49, compared to the original SD of 2.37.  It seems like the standard deviation of the observations will vary by about 0.2 or 0.3 units between two different resamples, with most values being somewhere close to the original SD of 2.37.]{.soln}
+
+(c) Perform a resampling experiment with the `replicate()` function to study the sampling distribution of the SD.  Do not do 10000 replications - for this part, only do 100 replications.  Create a histogram of the 100 sample SDs, and also calculate the average and standard deviation of the 100 sample SDs.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sd_speed_100 <- tibble(
+  run = 1:100,
+  SDs = replicate(100,
+                    sd(new_data(sprint, 25)$speed) ) 
+)
+
+sd_speed_100 %>%
+  ggplot(aes(x = SDs)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+
+sd_speed_100 %>%
+  summarize(avg_SD = mean(SDs),
+            sd_SD = sd(SDs))
+```
+
+(d) Repeat part (c), but do an experiment with 1000 replications and finally an experiment with 10000 replications.  Create a histogram and calculate the numeric summaries for each.
+
+For all parts of (c) and (d), make sure you are always resampling 25 rows at each step.
+
+[1000 replications:]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sd_speed_1000 <- tibble(
+  run = 1:1000,
+  SDs = replicate(1000,
+                    sd(new_data(sprint, 25)$speed) ) 
+)
+
+sd_speed_1000 %>%
+  ggplot(aes(x = SDs)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+
+sd_speed_1000 %>%
+  summarize(avg_SD = mean(SDs),
+            sd_SD = sd(SDs))
+```
+
+
+[10000 replications:]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sd_speed_10000 <- tibble(
+  run = 1:10000,
+  SDs = replicate(10000,
+                    sd(new_data(sprint, 25)$speed) ) 
+)
+
+sd_speed_10000 %>%
+  ggplot(aes(x = SDs)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+
+sd_speed_10000 %>%
+  summarize(avg_SD = mean(SDs),
+            sd_SD = sd(SDs))
+```
+
+(e) What do you notice as you increase the number of resamples?  Why is it necessary to produce a large number of resamples when studying the sampling distribution of a statistic?
+
+[The histograms of sample standard deviation have similar spread, but the shape of the histogram for only 100 resamples is unstable.  That is to say, when we re-do the 100 resamples, we get a slightly different histogram each time, and the mean and SD of the resamples also can vary somewhat.  But the experiments with a larger number of resamples are consistent.]{.soln}
+
+[When performing a simulation-based experiment, it is important to perform enough simulations to get a good sense of what the random process looks like (in this case, the sampling distribution of the SD).  Changing the number of resamples doesn't change the underlying process we are trying to study, but only doing 100 resamples leaves potential room for random error.]{.soln}
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Continue working with the `sprint` data from problem 2.
+
+(a) Perform a resampling experiment with 10000 resamples to study the *sample maximum* of the data.  Create a histogram of the 10000 sample maximums and comment on its shape.  Also calculate the average value of these sample maximums.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+max_speed <- tibble(
+  run = 1:10000,
+  maximums = replicate(10000,
+                    max(new_data(sprint, 25)$speed) ) 
+)
+
+max_speed %>%
+  ggplot(aes(x = maximums)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+
+max_speed %>%
+  summarize(avg_max = mean(maximums))
+```
+
+[The histogram of sample maximums can only display values that actually exist in our data.  In most of the resamples, the maximum is the same as the maximum of the data, which is 18.3.  But if the 18.3 observation doesn't make it into the resample, we might get a different sample maximum like 16.2 or 15.9.]{.soln}
+
+(b) The sample maximum is an example of a statistic with **negative bias** - it systematically underestimates the true maximum.  Based on your histogram, explain how the *resampled maximum* underestimates the *data maximum* of 18.3.
+
+[The resampled maximum can at most only be as large as the data maximum, which is 18.3.  Otherwise, it will be a smaller value.  If we take the average of all 10000 of the resampled maximums, that average is less than 18.3.]{.soln}
+
+(c) Using a similar line of reasoning to (b), explain how the *data maximum* of 18.3 is most likely an underestimate of the true population maximum sprinting speed for this group of women.
+
+[The only way we can correctly measure the true maximum is if we just so happen to observe the fastest female sprinter in our sample of 25.  The only way we can be "wrong" about the maximum is if we don't happen to measure this particular woman, in which case we would get a sample maximum that is less than the true maximum.]{.soln}
+
+[It is technically possible for us to capture the highest value through a random sample, but in general, the largest value in a sample will systematically underestimate the largest value in the entire full population.]{.soln}
+
+
