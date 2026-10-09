@@ -1,0 +1,254 @@
+---
+title: "Section 7: Statistical Inference"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Hypothesis testing
+
+A device advertised as "90% effective" only works 24 out of 30 days.  Is this noteworthy?  
+
+Let's imagine what a typical 30 days would look like if the advertisement was correct.
+
+```{r}
+# Flip a "90-10" coin 30 times
+results <- sample(0:1, size = 30, replace = TRUE,
+                  prob = c(0.1, 0.9))
+
+results
+
+sum(results)
+mean(results)
+```
+
+Let's repeat this sampling procedure 10000 times to get a sampling distribution of "if the advertising is correct".
+
+```{r}
+proportions <- tibble(prop_correct = replicate(10000,
+                         mean(sample(0:1, size = 30, replace = TRUE,
+                         prob = c(0.1, 0.9)))
+                         )
+                      )
+```
+
+```{r}
+ggplot(proportions, aes(x = prop_correct)) +
+  geom_histogram(fill = "dodgerblue", color = "black", bins = 11)
+```
+
+Now let's add in our observed 24/30 days.
+
+```{r}
+obs <- 24/30
+
+ggplot(proportions, aes(x = prop_correct)) +
+  geom_histogram(fill = "dodgerblue", color = "black", bins = 11) +
+  geom_vline(xintercept = obs, color = "forestgreen",
+             linewidth = 1.5)
+```
+
+The resamples are called the null distribution - they represent the null hypothesis being true.
+
+The p-value is the proportion of resamples *as extreme* or *more extreme* than our observed value.
+
+```{r}
+21/30
+
+pval <- mean(proportions$prop_correct <= 0.8)
+
+pval
+```
+
+EX 7.1
+
+In a sample of 300 births near power plants, 52% were girls? Is this noteworthy?  Perform a simulation experiment where the null hypothesis is that p = 0.5, meaning girls and boys are equally likely.
+
+Then, compare your resampled values to the outcome with 300(0.52) = 156 girl births.
+
+```{r}
+# 0 represents boy, 1 represents girl
+prop_girl <- sample(0:1, size = 300, replace = T, prob = c(0.5, 0.5))
+
+mean(prop_girl)
+```
+
+```{r}
+birth_null_proportions <- tibble(
+  prop_girls = replicate(10000,
+                         mean(sample(0:1, size = 300,
+                                     replace = T, prob = c(0.5, 0.5))))
+)
+```
+
+```{r}
+ggplot(birth_null_proportions, aes(x = prop_girls)) +
+  geom_histogram(bins = 20) +
+  geom_vline(xintercept = 0.52, col = "forestgreen", 
+             linewidth = 1.5)
+```
+
+```{r}
+# One-sided pvalue
+mean(birth_null_proportions$prop_girls >= 0.52)
+
+# Two-sided pvalue
+mean(birth_null_proportions$prop_girls >= 0.52) +
+  mean(birth_null_proportions$prop_girls <= 0.48)
+```
+
+
+
+## Two-sample test
+
+Let's return to the two-sample penguin example, where we are comparing the median weight of male and female Adelie penguins.
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv") %>%
+  relocate(flipper_length_mm, .after = species)
+
+adelie <- penguins %>% filter(species == "Adelie")
+
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+```{r}
+adelie %>%
+  group_by(sex) %>%
+  summarize(med_mass = median(body_mass_g))
+```
+
+
+The "big box" resampling corresponds to a null hypothesis that the median weights are the same for the two groups.
+
+```{r}
+median_diffs <- tibble(
+  run = 1:10000,
+  female = replicate(10000,
+                    median(new_data(adelie, 73)$body_mass_g) ),
+  male = replicate(10000,
+                    median(new_data(adelie, 73)$body_mass_g) ),
+  diff = female - male
+)
+
+median_diffs
+```
+
+```{r}
+ggplot(median_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = -600,
+             color = "forestgreen", linewidth = 1.5)
+```
+
+Two-sided p-value calculation:
+
+```{r}
+# "as or more extreme" than 600 on BOTH sides
+mean(median_diffs$diff <= -600) + mean(median_diffs$diff >= 600)
+```
+
+
+## Confidence intervals
+
+Let's build a confidence interval for the average Adelie penguin flipper length.
+
+```{r}
+adelie %>%
+  summarize(mean_flip_len = mean(flipper_length_mm))
+```
+
+```{r}
+average_lengths <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(adelie, 146)$flipper_length_mm) ) 
+)
+
+
+average_lengths
+```
+
+Let's consider the 99% most central values (the 0.5th to 99.5th percentiles):
+
+```{r}
+quantile(average_lengths$xbars, c(0.005, 0.995))
+
+m_lower <- quantile(average_lengths$xbars, 0.005)
+m_upper <- quantile(average_lengths$xbars, 0.995)
+```
+
+The final CI calculation:
+
+```{r}
+m_obs <- 190.1027	
+
+
+# 99% CI
+c(2*(m_obs) - m_upper, 2*m_obs - m_lower)
+```
+
+EX 7.3
+
+Use the same data to build a 95% and a 98% CI.  You don't need to redo the sampling experiment - just get the correct quantiles for each confidence level!  Note how the width changes as the confidence level changes.
+
+```{r}
+# 98% CI
+m_lower <- quantile(average_lengths$xbars, 0.01)
+m_upper <- quantile(average_lengths$xbars, 0.99)
+
+c(2*(m_obs) - m_upper, 2*m_obs - m_lower)
+```
+
+```{r}
+# 95% CI
+m_lower <- quantile(average_lengths$xbars, 0.025)
+m_upper <- quantile(average_lengths$xbars, 0.975)
+
+c(2*(m_obs) - m_upper, 2*m_obs - m_lower)
+```
+
+
+EX 7.4
+
+If time permits, build a 95% CI for median Gentoo penguin flipper length.  Here is the resampling experiment we did last time:
+
+```{r}
+gentoo <- penguins %>% filter(species == "Gentoo")
+
+gentoo %>%
+  summarize(med_length = median(flipper_length_mm))
+```
+
+```{r}
+median_lengths <- tibble(
+  run = 1:10000,
+  medians = replicate(10000,
+                    median(new_data(gentoo, 119)$flipper_length_mm) ) 
+)
+
+median_lengths
+```
+
+```{r}
+m_lower <- quantile(median_lengths$medians, 0.025)
+m_upper <- quantile(median_lengths$medians, 0.975)
+
+m_lower
+m_upper
+```
+
+```{r}
+c(2*216 - m_upper, 2*216 - m_lower)
+```
+
+
+
