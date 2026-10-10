@@ -1,0 +1,369 @@
+---
+title: "Homework 5"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw05` on your local computer.
+- You should also download `penguins.csv` and `exoplanets-clean-through-2022.csv` to `STAT240/data` on your local computer.
+
+
+# Problem 1
+
+Suppose you have completed a hypothesis test and found a final p-value of 0.03.  Which of the following statements is an appropriate conclusion?  Give a brief explanation for each.
+
+- Since we have a small p-value, we have failed to disprove the alternative hypothesis.
+
+[This conclusion is not correct, because we are not trying to disprove the alternative hypothesis.  Instead, we assume the alternative is false, and look for evidence in favor of the alternative.]{.soln}
+
+- If the null hypothesis were true, the p-value would be larger than 0.05.  So, the null hypothesis is false.
+
+[This conclusion is not correct.  If the null were true, the p-value from our test statistic would be larger than 0.05 with probability 0.95.  So, even if the null were true, there is still a 5% chance of getting a small p-value.  We cannot definitively disprove the null through hypothesis testing.]{.soln}
+
+- If the null hypothesis were true, the p-value would be smaller in only 3% of cases.  So, the null hypothesis is probably false.
+
+[This conclusion is the most accurate.  Because our p-value is very extreme and unlikely under the assumption of the null being true, this gives us evidence that the null might be false.]{.soln}
+
+- There is only a 3% chance that the null hypothesis is true, so the null hypothesis is probably false.
+
+[This is an incorrect interpretation of a p-value.  The probability of a p-value has to do with the test statistic we observe, and it does not apply directly to the null hypothesis.]{.soln}
+
+
+# Problem 2
+
+A researcher is studying whether pigs can detect truffles buried underground.  A pig is given 5 different plots, one of which has a truffle hidden in it.  In 35 of these trials, the pig correctly detected the plot with a truffle 34% of the time.
+
+(a) Write hypotheses for the question of interest, where $p$ is the true probability that the pig can detect the plot with a truffle.  What is the null value of $p$, and what should the direction of the alternative hypothesis be?
+
+[Since there is a 1/5 chance of finding the truffle from random guessing, we have two-sided hypotheses
+$$H_0: p = 0.2 \quad \text{versus} \quad H_A: p \neq 0.2$$
+]{.soln}
+
+(b) Using simulation, perform a hypothesis test of the hypotheses in (a).  Calculate a p-value and draw a conclusion in context at the 1% significance level.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+truffle <- tibble(prop_found = replicate(10000,
+                         mean(sample(0:1, size = 35, replace = TRUE,
+                         prob = c(0.8, 0.2)))
+                         )
+                      )
+```
+
+[Our observed probability is 0.34, so our p-value is the probability above 0.34 and the probability below $(0.2 - (0.34-0.2)) = 0.06$.  This is because 0.34 and 0.06 are equally surprising under the null with our two-sided alternative hypothesis.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+mean(truffle$prop_found <= 0.06) +
+  mean(truffle$prop_found >= 0.34)
+```
+
+[We have a p-value of about 0.05, which is greater than our $\alpha$ of 0.01, so we have a non-significant result.   We failed to find evidence that the probability for a pig to find the truffle is better than random guessing.]{.soln}
+
+# Problem 3
+
+The dataset below, `customers`, gives the hold time (in minutes) for 44 customers using a store's phone help line.  Customers who are not put on hold are given a hold time of 0.
+
+```{r}
+customers <- tibble(
+  hold = c(0, 0, 3, 5, 23, 0, 0, 1, 1, 2, 1, 0, 0, 4, 0, 0,
+                  14, 0, 1, 2, 0, 16, 10, 8, 6, 2, 0, 1, 0, 1, 
+                  34, 1, 0, 2, 3, 2, 2, 1, 0, 0, 0, 5, 1, 0)
+)
+
+median(customers$hold)
+```
+
+The store wants to know if customers tend to be put on hold, so they plan to perform a test of hypotheses
+
+$$H_0: Med_{ht} = 0 \quad \text{versus} \quad H_A: Med_{ht} > 0$$
+
+(a) Why are one-sided hypotheses appropriate in this situation?
+
+[Normally, we default to using a two-sided alternative hypothesis to avoid data dredging and account for the possibility of a result happening in either direction.  However, since hold times must be positive, and our null is 0, it is only possible to see a result in the positive direction. Thus a one-sided test is appropriate.]{.soln}
+
+(b) Perform a resampling experiment of the above hypotheses.  The `new_data()` function from lecture is provided to you.  Calculate a p-value and draw a conclusion in context at the 5% significance level.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+[I'll start by resampling 10000 sample medians from the data.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+median_times <- tibble(
+  run = 1:10000,
+  medians = replicate(10000,
+                    median(new_data(customers, 44)$hold) ) 
+)
+```
+
+[Next, I'll calculate the proportion of resampled medians greater than or equal to our observed median of 1.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+mean(median_times$medians >= 1)
+```
+
+[We have a very large p-value, which is weak evidence against the null hypothesis.  We do not have evidence that the median wait time is greater than 0.]{.soln}
+
+
+# Problem 4
+
+Consider a situation where we have too little data to work with.  An auto salesman records the cost (in thousands of dollars) of the three most recently sold vehicles:
+
+```{r}
+vehicles <- tibble(
+  date_sold = c("8/15, 8/22,9/17"),
+  cost = c(41.2, 33.5, 25.3)
+)
+
+mean(vehicles$cost)
+```
+
+(a) Resample 10000 times from the data to create a sampling distribution of the mean cost of vehicles sold.  Also create a histogram of this data.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+avg_cost <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(vehicles, 3)$cost) ) 
+)
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(avg_cost, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+(b) Comment on the shape of this histogram.  How is this histogram different from a typical histogram of the sample mean?
+
+[The histogram is very spread out and has a relatively small number of unique values, since there are so few data values to choose from.  When working with data with a larger sample size, the histogram of the resampled sample means looks much more continuous and is much more concentrated around the data mean.]{.soln}
+
+(c) Can we fix the odd behavior in the histogram by performing additional resamples, such as doing 20000 instead of 10000?  Why or why not?
+
+[No, this result has nothing to do with the number of resamples, it has to do with having very little data.  If we did many more resamples, we would still see the same values as before and create a very similar histogram.]{.soln}
+
+(d) What problems would arise from trying to do statistical inference (a CI or hypothesis test) based on a very small sample?
+
+[Such a small sample would cause strange and unwanted behavior when trying to do statistical inference.  The results of a hypothesis test or CI would be strongly affected by the three specific observations that we happened to observe, which is much too small of a sample to be a good representation of the full population of sold vehicles.  If the sample itself does not represent the population, resampling will not fix it.]{.soln}
+
+
+# Problem 5
+
+Return to the truffle example in problem 2.  Build a 99% confidence interval for the proportion of times a pig correctly identifies which plot out of 5 contains a truffle.
+
+(a) First, perform the resampling experiment to generate 10000 sample proportions.  How is this experiment different from the resampling you did to find the null distribution in 2(b)?
+
+[Now that we are building a CI, we do not have a null hypothesis and so we are not making any assumptions about our data.  We should do our resampling experiment based on the observed proportion of 0.34, not the null value of 0.2.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+truffle2 <- tibble(prop_found = replicate(10000,
+                         mean(sample(0:1, size = 35, replace = TRUE,
+                         prob = c(0.66, 0.34)))
+                         )
+                      )
+```
+
+(b) Build and interpret your 99% confidence interval.
+
+[For a 99% CI, we should use the 0.5th quantile of resamples and the 99.5th quantile of resamples.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+m_obs <- 0.34
+
+m_lower <- quantile(truffle2$prop_found, 0.005)
+m_upper <- quantile(truffle2$prop_found, 0.995)
+
+c(2*m_obs - m_upper, 2*m_obs - m_lower)
+```
+
+[We are 99% confident that the true probability of a pig successfully finding the truffle is in this range.]{.soln}
+
+(c) Compare the findings of your interval to the null hypothesis and p-value from problem 2.  Are the methods consistent?
+
+[The 99% confidence interval covers the null value of 0.2 from our hypothesis test, which failed to reject at the 1% level.  Both methods reach the same conclusion in this case, which is that the data is consistent with the true proportion being 0.2.  We lack evidence against the null hypothesis of random guessing.]{.soln}
+
+
+# Problem 6
+
+Generalize your code to find $M_{lower}$ and $M_{upper}$ for any $\alpha$.
+
+(a) Copy-paste the code you used in 5(b) to find $M_{lower}$ and $M_{upper}$ for a 99% CI.  Re-write the code so that it is in terms of the variable `alpha` instead of manually entering the specific quantile.  For example, if `alpha` is set to 0.04 you should get the 2nd and 98th percentiles.
+
+[In general, if the confidence level is $1 - \alpha$, the lower quantile is $\alpha / 2$ and the upper quantile is $1 - (\alpha / 2)$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+alpha <- 0.04
+
+m_lower <- quantile(truffle2$prop_found, alpha/2)
+m_upper <- quantile(truffle2$prop_found, 1 - (alpha/2))
+
+c(m_lower, m_upper)
+```
+
+(b) What happens to the value of $M_{lower}$ and $M_{upper}$ as $\alpha$ decreases?
+
+[As $\alpha$ decreases, our confidence level increases, and the difference between $M_{lower}$ and $M_{upper}$ is larger.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+alpha <- 0.001
+
+m_lower <- quantile(truffle2$prop_found, alpha/2)
+m_upper <- quantile(truffle2$prop_found, 1 - (alpha/2))
+
+c(m_lower, m_upper)
+```
+
+(c) Try running the code with `alpha` set to 0.  What are $M_{lower}$ and $M_{upper}$ in this case?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+alpha <- 0
+
+m_lower <- quantile(truffle2$prop_found, alpha/2)
+m_upper <- quantile(truffle2$prop_found, 1 - (alpha/2))
+
+c(m_lower, m_upper)
+```
+
+[When $\alpha$ is zero, $M_{lower}$ is the minimum value of all of our resamples, and $M_{upper}$ is the maximum value of all of our resamples.]{.soln}
+
+(d) What does a 100% confidence interval look like *in theory*.  In other words, what does our interval need to be in order to cover every possible value of the population parameter?
+
+[As the confidence level increases, the interval gets wider.  If we wanted to have 100% confidence in general, our CI would need to cover the entire real line, which is $(-\infty, \infty)$!  This limiting result is not possible with a finite number of resamples.]{.soln}
+
+
+# Problem 7
+
+Return to the `planets` data from homework 3.
+
+```{r}
+planets <- read_csv("../../data/exoplanets-clean-through-2022.csv")
+```
+
+Consider using this data to estimate the median mass of all planets in the solar system. 
+
+(a) Use resampling to create and interpret a 99% confidence interval for the median planet mass.  You'll need to remove any rows from the data with missing values for mass.
+
+[There are 1397 observations with recorded values of mass.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+planets_clean <- planets %>%
+  drop_na(mass)
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+median_mass <- tibble(
+  run = 1:10000,
+  medians = replicate(10000,
+                    median(new_data(planets_clean, 1397)$mass) ) 
+)
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+m_obs <- median(planets_clean$mass)
+
+m_lower <- quantile(median_mass$medians, 0.005)
+m_upper <- quantile(median_mass$medians, 0.995)
+
+c(2*m_obs - m_upper, 2*m_obs - m_lower)
+```
+
+[We are 99% confident that the true median mass of planets in the solar system falls in this range.]{.soln}
+
+(b) Why might the interval created in (a) not be a valid estimate, even though we have a very large amount of data?  Consider the population of interest, the way the data was collected, the data tidying required to build the CI, and the assumptions necessary for a CI to work.
+
+[The resampling confidence interval is only valid if the relationship between the data and the resamples matches the relationship between the population and the data.  This is not something we can verify, and it may not be safe to assume in this case.]{.soln}
+
+[Our population of interest is every planet in the solar system, and the data that we collected may not be representative of this population.  We only have data on the planets that are actually measuable from Earth.  Furthermore, we had to remove most of the original data because there were missing values of mass.  This might introduce some bias if, for example, planets with smaller mass are more likely to show up as `NA`.]{.soln}
+
+[Even though we can build and report our CI, the interpretation with respect to the entire solar system is probably not correct.]{.soln}
+
+
+# Problem 8
+
+Return to the penguin data from lecture, where we studied the difference between the median body mass for male and female Adelie penguins.  Consider building a confidence interval for $Med_F - Med_M$. 
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv") %>%
+  relocate(flipper_length_mm, .after = species)
+
+adelie <- penguins %>% filter(species == "Adelie")
+```
+
+(a) Resample the median body weight difference 10000 times, similar to what we did in lecture.  Instead of using the "big box" approach, you should instead resample the female and male groups separately.
+
+[I'll create two separate dataframes to hold the male and female Adelie penguins.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+adelie_F <- adelie %>%
+  filter(sex == "female")
+
+adelie_M <- adelie %>%
+  filter(sex == "male")
+
+median_diffs <- tibble(
+  run = 1:10000,
+  female = replicate(10000,
+                    median(new_data(adelie_F, 73)$body_mass_g) ),
+  male = replicate(10000,
+                    median(new_data(adelie_M, 73)$body_mass_g) ),
+  diff = female - male
+)
+```
+
+(b) Build a histogram of the resampled median differences.  If the resampling was done correctly, the histogram should be centered at approximately -600.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(median_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+(c) Build and interpret a 95% confidence interval for $Med_F - Med_M$.
+
+[From lecture, the observed median difference is -600.  For a 95% CI, I'll use the 2.5 and 97.5 quantiles of the resamples.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+m_obs <- -600
+
+m_lower <- quantile(median_diffs$diff, 0.025)
+m_upper <- quantile(median_diffs$diff, 0.975)
+
+c(2*m_obs - m_upper, 2*m_obs - m_lower)
+```
+
+[We are 95% confident that the true difference in median body mass of Adelie penguins (female - male) is within this range.]{.soln}
+
+(d) Why should we not use the "big box" resampling procedure when building a confidence interval, even though we use the big box for the two-sample hypothesis test?
+
+[The "big box" resampling, which combines the female and male penguins into one big group, comes from our null hypothesis that says that the two groups are the same.  When we are building a CI, we don't have a null hypothesis, and so we make no assumption that the two groups have the same median.  So we should keep the female and male penguins separate for resmapling.]{.soln}
+
+
+
+
+
+
+

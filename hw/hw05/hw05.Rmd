@@ -1,0 +1,154 @@
+---
+title: "Homework 5"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw05` on your local computer.
+- You should also download `penguins.csv` and `exoplanets-clean-through-2022.csv` to `STAT240/data` on your local computer.
+
+
+# Problem 1
+
+Suppose you have completed a hypothesis test and found a final p-value of 0.03.  Which of the following statements is an appropriate conclusion?  Give a brief explanation for each.
+
+- Since we have a small p-value, we have failed to disprove the alternative hypothesis.
+
+- If the null hypothesis were true, the p-value would be larger than 0.05.  So, the null hypothesis is false.
+
+- If the null hypothesis were true, the p-value would be smaller in only 3% of cases.  So, the null hypothesis is probably false.
+
+- There is only a 3% chance that the null hypothesis is true, so the null hypothesis is probably false.
+
+
+# Problem 2
+
+A researcher is studying whether pigs can detect truffles buried underground.  A pig is given 5 different plots, one of which has a truffle hidden in it.  In 35 of these trials, the pig correctly detected the plot with a truffle 34% of the time.
+
+(a) Write hypotheses for the question of interest, where $p$ is the true probability that the pig can detect the plot with a truffle.  What is the null value of $p$, and what should the direction of the alternative hypothesis be?
+
+(b) Using simulation, perform a hypothesis test of the hypotheses in (a).  Calculate a p-value and draw a conclusion in context at the 1% significance level.
+
+
+# Problem 3
+
+The dataset below, `customers`, gives the hold time (in minutes) for 44 customers using a store's phone help line.  Customers who are not put on hold are given a hold time of 0.
+
+```{r}
+customers <- tibble(
+  hold = c(0, 0, 3, 5, 23, 0, 0, 1, 1, 2, 1, 0, 0, 4, 0, 0,
+                  14, 0, 1, 2, 0, 16, 10, 8, 6, 2, 0, 1, 0, 1, 
+                  34, 1, 0, 2, 3, 2, 2, 1, 0, 0, 0, 5, 1, 0)
+)
+
+median(customers$hold)
+```
+
+The store wants to know if customers tend to be put on hold, so they plan to perform a test of hypotheses
+
+$$H_0: Med_{ht} = 0 \quad \text{versus} \quad H_A: Med_{ht} > 0$$
+
+(a) Why are one-sided hypotheses appropriate in this situation?
+
+(b) Perform a resampling experiment of the above hypotheses.  The `new_data()` function from lecture is provided to you.  Calculate a p-value and draw a conclusion in context at the 5% significance level.
+
+
+# Problem 4
+
+Consider a situation where we have too little data to work with.  An auto salesman records the cost (in thousands of dollars) of the three most recently sold vehicles:
+
+```{r}
+vehicles <- tibble(
+  date_sold = c("8/15, 8/22,9/17"),
+  cost = c(41.2, 33.5, 25.3)
+)
+
+mean(vehicles$cost)
+```
+
+(a) Resample 10000 times from the data to create a sampling distribution of the mean cost of vehicles sold.  Also create a histogram of this data.
+
+(b) Comment on the shape of this histogram.  How is this histogram different from a typical histogram of the sample mean?
+
+(c) Can we fix the odd behavior in the histogram by performing additional resamples, such as doing 20000 instead of 10000?  Why or why not?
+
+(d) What problems would arise from trying to do statistical inference (a CI or hypothesis test) based on a very small sample?
+
+
+# Problem 5
+
+Return to the truffle example in problem 2.  Build a 99% confidence interval for the proportion of times a pig correctly identifies which plot out of 5 contains a truffle.
+
+(a) First, perform the resampling experiment to generate 10000 sample proportions.  How is this experiment different from the resampling you did to find the null distribution in 2(b)?
+
+(b) Build and interpret your 99% confidence interval.
+
+(c) Compare the findings of your interval to the null hypothesis and p-value from problem 2.  Are the methods consistent?
+
+
+# Problem 6
+
+Generalize your code to find $M_{lower}$ and $M_{upper}$ for any $\alpha$.
+
+(a) Copy-paste the code you used in 5(b) to find $M_{lower}$ and $M_{upper}$ for a 99% CI.  Re-write the code so that it is in terms of the variable `alpha` instead of manually entering the specific quantile.  For example, if `alpha` is set to 0.04 you should get the 2nd and 98th percentiles.
+
+```{r}
+alpha <- 0.04
+```
+
+(b) What happens to the value of $M_{lower}$ and $M_{upper}$ as $\alpha$ decreases?
+
+(c) Try running the code with `alpha` set to 0.  What are $M_{lower}$ and $M_{upper}$ in this case?
+
+(d) What does a 100% confidence interval look like *in theory*.  In other words, what does our interval need to be in order to cover every possible value of the population parameter?
+
+
+# Problem 7
+
+Return to the `planets` data from homework 3.
+
+```{r}
+planets <- read_csv("../../data/exoplanets-clean-through-2022.csv")
+```
+
+Consider using this data to estimate the median mass of all planets in the solar system. 
+
+(a) Use resampling to create and interpret a 99% confidence interval for the median planet mass.  You'll need to remove any rows from the data with missing values for mass.
+
+(b) Why might the interval created in (a) not be a valid estimate, even though we have a very large amount of data?  Consider the population of interest, the way the data was collected, the data tidying required to build the CI, and the assumptions necessary for a CI to work.
+
+
+# Problem 8
+
+Return to the penguin data from lecture, where we studied the difference between the median body mass for male and female Adelie penguins.  Consider building a confidence interval for $Med_F - Med_M$. 
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv") %>%
+  relocate(flipper_length_mm, .after = species)
+
+adelie <- penguins %>% filter(species == "Adelie")
+```
+
+(a) Resample the median body weight difference 10000 times, similar to what we did in lecture.  Instead of using the "big box" approach, you should instead resample the female and male groups separately.
+
+(b) Build a histogram of the resampled median differences.  If the resampling was done correctly, the histogram should be centered at approximately -600.
+
+(c) Build and interpret a 95% confidence interval for $Med_F - Med_M$.
+
+(d) Why should we not use the "big box" resampling procedure when building a confidence interval, even though we use the big box for the two-sample hypothesis test?
+
+
+
+
+
+
+
