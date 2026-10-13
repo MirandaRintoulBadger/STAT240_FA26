@@ -1,0 +1,354 @@
+---
+title: "Homework 4"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, error = TRUE)
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw04` on your local computer.
+- You should also download `ships.csv` to `STAT240/data` on your local computer.
+
+
+# Problem 1
+
+The `ships` dataset from R package MASS gives information on the number of damage incidents and several other variables for 40 ships. The columns are:
+
+- `type`: "A" to "E"
+- `year` of construction: 1960–64, 65–69, 70–74, 75–79
+- `period` of operation: 1960–74, 75–79
+- `service`: aggregate months of service
+- `incidents`: number of damage incidents
+
+```{r}
+ships <- read_csv("../../data/ships.csv")
+```
+
+Consider performing a resampling experiment to study the average number of damage incidents in 40 ships.  
+
+(a) Create a histogram of the number of damage incidents for the 40 ships in the data.  What do you notice about the shape of the data?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(ships, aes(x = incidents)) +
+  geom_histogram()
+```
+
+[The number of damaging incidents is highly right-skewed: most of the ships have had 0 or 1 damaging incidents, but there are a few ships that have had a very large number of incidents.]{.soln}
+
+(b) Approximate the sampling distribution of the mean number of damaging incidents in 40 ships.  Do this by resampling from the `ships` data 10000 times.  The `new_data()` command from lecture is provided for you.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+average_incidents <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(ships, 40)$incidents) ) 
+)
+```
+
+(c) Create a histogram of the 10000 sample means found in (b), and comment on its shape.  How does it compare to the histogram of the raw data?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(average_incidents, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+[The histogram of the sampling distribution of the mean looks much more symmetric and less spread out than the original population, with a smooth peak concentrated around 7 or 8.  There is still a bit of a right tail.]{.soln}
+
+(d) Re-create the plot in (c), but use `geom_density()` instead of `geom_histogram()`.  What type of plot is this?  How is it similar to the histogram, and how is it different?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(average_incidents, aes(x = xbars)) +
+  geom_density(fill = "dodgerblue", color = "black")
+```
+
+[The density plot has the same overall "slightly asymmetric bell curve" shape as the histogram, but it is smoothed out to look like a continuous curve.  We can see the overall trend but we can no longer see the distinct bins.]{.soln}
+
+
+# Problem 2
+
+Continue working with the `ships` data from problem 1.  Now, perform a resampling experiment to study the *median* number of damage incidents in 40 ships. 
+
+(a) Approximate the sampling distribution of the median number of damaging incidents in 40 ships.  Do this by resampling from the `ships` data 10000 times.  You can use the `new_data()` function from above.  Then, build and interpret a histogram of the sample medians.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+median_incidents <- tibble(
+  run = 1:10000,
+  medians = replicate(10000,
+                    median(new_data(ships, 40)$incidents) ) 
+)
+
+ggplot(median_incidents, aes(x = medians)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+[The histogram of sample medians reflects the asymmetry of the number of damaging incidents in the population.  The sample median is 1 most of the time, but is occasionally larger.]{.soln}
+
+(b) Do you think the mean or the median is a better metric to summarize "number of damaging incidents"?  Explain your answer.
+
+[Due to the skewed nature of the "incidents" data, I think the median is a more representative metric.  Because there are a small number of ships with a lot of damaging incidents, the value of the average is dragged upwards and is larger than what we would intuitively expect for a "typical" number of damaging incidents.]{.soln}
+
+(c) Also create a density plot with `geom_density()` for the sample medians.  Is it appropriate to use a density plot for the sample medians?  Why does a density plot work better for the mean (in problem 1(d)) than the median?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(median_incidents, aes(x = medians)) +
+  geom_density(fill = "dodgerblue", color = "black")
+```
+
+[Since the median is more discrete, the density plot does not work very well.  The average is better approximated as a continuous curve, while the median can only exist at specific values (0, 0.5, 1, etc).]{.soln}
+
+
+# Problem 3
+
+The built-in dataset `warpbreaks` records the strength of two types of `wool` (A and B) in weaving.  The variable of interest is `breaks`, the number of breaks in the yarn when woven on a loom. For this problem, we can ignore the `tension` column.
+
+Which has the smallest average number of breaks - yarn A, or yarn B?
+
+(a) Calculate the average number of breaks for yarn A and B, as well as the observed difference in means ($\bar{x}_A - \bar{x}_B$).
+
+```{r, class.source="rsoln", class.output="rsoln"}
+warpbreaks %>%
+  group_by(wool) %>%
+  summarize(avg_breaks = mean(breaks), n = n())
+```
+
+[The difference in means (A - B) is 31.04 - 25.26 = 5.78.]{.soln}
+
+(b) Assume that A and B are equally likely to break. Approximate the sampling distribution of the *difference in average breaks* by resampling.  Do this by resampling a new group A and group B from the "big box" of all observations, and calculate the difference in means for all 10000 resamples.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+avg_diffs <- tibble(
+  run = 1:10000,
+  A = replicate(10000,
+                    mean(new_data(warpbreaks, 27)$breaks) ),
+  B = replicate(10000,
+                    mean(new_data(warpbreaks, 27)$breaks) ),
+  diff = A - B
+)
+```
+
+(c) Create a histogram of the resampled differences in (b).  Use `geom_vline()` to add a vertical line at the observed difference you calculated in (a).  Does it seem like yarns A and B have the same average number of breaks?  (You don't need to draw a formal statistical conclusion, just give a visual interpretation of your histogram and the vertical line at the observed difference.)
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(avg_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = 5.78, color = "forestgreen",
+             linewidth = 1.5)
+```
+
+[The observed difference of 5.78 is in the upper tail of differences (assuming A and B are equal).  It is hard to say for sure, but it seems like we have weak evidence to think that yarn A might have more breaks on a verage than yarn B.]{.soln}
+
+
+# Problem 4
+
+Continue working with the `warpbreaks` data.
+
+(a) Repeat the resampling experiment as in problem 3(b), but do not assume A and B come from the same population.  Instead, resample a new group A from the original group A data, and likewise for group B.  As before, calculate the difference in means for all 10000 resamples.
+
+[I'll use `filter()` to get a separate dataset of each type of yarn.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+warpbreaksA <- warpbreaks %>%
+  filter(wool == "A")
+
+warpbreaksB <- warpbreaks %>%
+  filter(wool == "B")
+
+avg_diffs_separate <- tibble(
+  run = 1:10000,
+  A = replicate(10000,
+                    mean(new_data(warpbreaksA, 27)$breaks) ),
+  B = replicate(10000,
+                    mean(new_data(warpbreaksB, 27)$breaks) ),
+  diff = A - B
+)
+```
+
+(b) Create a histogram of the resampled differences in (a).  How does this histogram compare to the one in problem 3(c)?  Consider both the location and spread of the two histograms.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(avg_diffs_separate, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+[Compared to the histogram of 3(c), the histogram of differences has about the same shape and spread, but a different center.  Instead of being centered at 0, it is centered at about 5.78, which is the observed difference in means.]{.soln}
+
+
+# Problem 5
+
+The R code below creates a histogram showing the distribution of the number of pets per household.
+
+```{r, echo=F}
+theme_set(old)
+```
+
+```{r}
+ggplot(mapping = aes(x = 0:4, y = c(0.3, 0.35, 0.15, 0.15, 0.05))) +
+  geom_col() +
+  theme(axis.title = element_blank())
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+
+Consider taking a sample from this population and calculating the total, mean, or median.  Match the five descriptions below to the correct sampling distribution histogram in `p5_choices.png`.  Briefly justify each of your choices.
+
+- The average number of pets in a sample of 10 households.
+[Histogram E - the graph is somewhat symmetric and centered around 1-1.5, which is the center of the population.]{.soln}
+
+- The average number of pets in a sample of 20 households.
+[Histogram A - the graph is centered around 1-1.5 and is more symmetric and less spread out than histogram E, which makes sense for a larger sample.]{.soln}
+
+- The total number of pets in a sample of 10 households.
+[Histogram B - the graph is centered around 10-15, which is 10 times the center of the original population.]{.soln}
+
+- The median number of pets in a sample of 6 households.
+[Histogram D - the graph shows discrete values (0.5, 1, 1.5, etc) for the median.]{.soln}
+
+- The median number of pets in a sample of 10 households.
+[Histogram F - the graph shows discrete values for the median and has more weight around 1 (the true population median) which would be more likely with a larger sample.]{.soln}
+
+
+# Problem 6
+
+The **median absolute deviation** (MAD) is a measure of spread based on the median, similar to how the standard deviation is based on the mean.  The MAD of some data $X$ is found by taking the absolute deviation from each data point to the median:
+
+$$|X_i - Med(X)|$$
+
+then finding the median of those absolute deviations:
+
+$$MAD = Med(|X_i - Med(X)|)$$
+
+We'll demonstrate this measure with this fictional dataset of reaction times (in milliseconds)
+
+```{r}
+reaction_times <- tibble(
+  participant = 1:20,
+  time = c(708, 510, 742, 720, 298,
+           426, 339, 1638, 675, 1255,
+           555, 353, 590, 339, 688,
+           567, 809, 912, 1032, 450)
+)
+```
+
+(a) Create a histogram of reaction times.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(reaction_times, aes(x = time)) +
+  geom_histogram()
+```
+
+(b) Calculate the MAD of the reaction times by using the `median()` and `abs()` commands.  Use the `mad()` code with `constant = 1` to verify your answer.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+med_time <- median(reaction_times$time)
+
+median( abs(reaction_times$time - med_time) )
+```
+
+```{r}
+mad(reaction_times$time, constant = 1)
+```
+
+(c) Approximate the sampling distribution of the MAD of reaction times.  Do this by resampling from the `reaction_times` data 10000 times. Then, build a histogram of the sample MADs.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+mad_times <- tibble(
+  run = 1:10000,
+  mads = replicate(10000,
+                    mad(new_data(reaction_times, 20)$time,
+                        constant = 1) ) 
+)
+
+ggplot(mad_times, aes(x = mads)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+(d) Why might a measure of spread like the MAD be preferred over standard deviation?
+
+[In the case of skewed data (like reaction time), we often prefer the median as an alternative measure of spread to the mean because it is more robust to extreme values.  The MAD applies that same reasoning to a measure of spread.  We want to measure the "typical" deviation from the center without having our result be over-inflated by extreme values.]{.soln}
+
+
+# Problem 7
+
+We have seen examples of resampling numeric data to study the mean or median.  Now, consider resampling to study a binary outcome. 
+
+In a sample of 1014 measles cases, 142 (14%) were vaccinated against measles, and 872 (86%) were not.  Is this result noteworthy?  We need to compare this against the vaccination rate of the general population, which is 92%.
+
+(a) The R code below gathers a sample of size 1014 from a population of individuals with a 50% vaccination rate.  It returns a vector of 0's and 1's, where 0 represents an unvaccinated individual and 1 represents a vaccinated individual.
+
+Edit the code so that it represents a sample from a population with a 92% vaccination rate, and then use the `mean()` function to calculate the proportion of vaccinated individuals in the sample.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+vaccination_status <- sample(0:1, size = 1014, replace = TRUE,
+       prob = c(0.08, 0.92))
+
+mean(vaccination_status)
+```
+
+(b) Perform a resampling experiment from your population data to simulate the proportion of vaccinated invidivuals in a random sample 10000 times.  You'll need to `replicate()` the mean calculation you did in part (a).
+
+```{r, class.source="rsoln", class.output="rsoln"}
+proportions <- tibble(prop_vacc = replicate(10000,
+                         mean(sample(0:1, size = 1014, replace = TRUE,
+                         prob = c(0.08, 0.92)))
+                         )
+                      )
+```
+
+
+# Problem 8
+
+Continue working with the measles vaccination example.
+
+(a) Create a histogram of the sample proportions calculated in problem 7(b).  If this is done correctly, you should see a histogram centered approximately at x = 0.92.  Also use `geom_vline()` to draw a vertical line at x = 0.14, the vaccination rate among measles patients.
+
+```{r,  class.source="rsoln", class.output="rsoln"}
+ggplot(proportions, aes(x = prop_vacc)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = 0.15, color = "forestgreen",
+             linewidth = 1.5)
+```
+
+(b) Based on your histogram, is it reasonable that a vaccination rate of 14% could have been sampled randomly from the population?  (You don't need to draw a formal statistical conclusion, just give a visual interpretation of your histogram and the vertical line at x = 0.14.)
+
+[The observed value of 14% vaccination rate is completely outside of the histogram of sample proportions, and so it is wildly implausible for 14% to have come from a random sample from the population.  We have very strong evidence that the vaccination rate for measles patients is different from the vaccination rate in the general population.]{.soln}
+
+
+
+
+
+
+
+
