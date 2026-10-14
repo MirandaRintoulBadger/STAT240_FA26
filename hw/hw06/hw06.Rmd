@@ -1,0 +1,180 @@
+---
+title: "Homework 6"
+author: "Student's Name Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw05` on your local computer.
+- Download `Cameron_Lectures_SP24.csv` to `STAT240/data`.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+In a certain soccer league, there are a total of 1-7 goals per game, with most games having 2 or fewer total goals.
+
+The distribution of the number of goals is shown below, with the probability of four total goals being scored removed.
+
+```{r}
+goal_vals <- 1:7
+goal_probs <- c(0.335, 0.236, 0.231, NA, 
+                0.066, 0.018, 0.012)
+
+goals <- tibble(goal_vals, goal_probs)
+
+goal_distribution <- ggplot(goals, aes(x = goal_vals, y = goal_probs)) +
+  geom_segment(aes(xend = goal_vals, yend = 0), color = "blue", size=2) +
+  geom_hline(yintercept = 0) +
+  scale_x_continuous(breaks = goal_vals) +
+  ylab("P(X=x)") +
+  ggtitle("Distribution of Total Goals per Game") +
+  
+  annotate("text", x = 4, y = 0.1, label = "?", size = 15, color = "blue")
+
+goal_distribution
+```
+
+Write code with either base R or dplyr to manually compute the value of the missing $P(\text{Goals} = 4)$. Save that single value as `p4`.
+
+On a separate line, let the value of `p4` be printed as output in your knitted file.
+
+
+# Problem 2
+
+The following code inserts the missing `p4` into the missing slot.  For parts (a)-(c), you can use R and `goal_vals` and `goal_probs` for your calculations.
+
+```{r}
+goal_vals <- 1:7
+goal_probs <- c(0.335, 0.236, 0.231, p4, 
+                0.066, 0.018, 0.012)
+```
+
+(a) What is the mean of this distribution?
+
+(b) What is the variance of this distribution?
+
+(c) What is the standard deviation of this distribution?
+
+(d) Let $\mu$ refer to the mean/expected value you calculated in (a). For each of the following interpretations of $\mu$, identify whether are correct or incorrect, and briefly explain.
+
+"Most games played will end up with $\mu$ total goals scored."
+
+"In an infinitely big sample of games, the long-run average number of goals would be $\mu$."
+
+"Half of games have fewer than $\mu$ goals and half of them have more than $\mu$ goals."
+
+
+# Problem 3
+
+The `lectures` dataset contains information on the length in decimal minutes (not seconds) of Cameron's Spring 2024 STAT 240 lectures, and information on the outfits he wore.
+
+```{r}
+lectures <- read_csv("../../data/Cameron_Lectures_SP24.csv")
+```
+
+Create a histogram of `total_minutes`.
+
+Incorporate the following customizations:
+
+- The bins should be of width 1, and have boundaries on each of the whole numbers. E.g., there should be a bin from 47 to 48, 48 to 49, et cetera.
+
+- Use a consistent color scheme for the interior and exterior of each bar that is the same for every bar.
+
+- If ggplot does not do it by default, make sure the x axis labels are each of the whole numbers 47 through 52.
+
+
+# Problem 4
+
+Our goal in this problem is to calculate the percentages associated with each of the five bars in the above histogram.
+
+First, create a new variable called `base_minutes` by "truncating" `total_minutes` by using the `floor()` function.  This is effectively just cutting the decimal off, which is different than rounding; 49.4, 49.9, 50.1, 50.8 will become 49, 49, 50, 50.
+
+Then, create a dataframe with one row for each different value of `base_minutes`, and a column `n` for how many times that value of `base_minutes` occurs. 
+
+Finally, create a `percent` variable by dividing `n` by the total number of lectures.
+
+Let this dataframe print as output, no need to save it in a new variable name.
+
+You should determine that 55.3% of Cameron's Spring 2024 lectures were 50 minutes long (plus extra seconds we do not care about).
+
+
+# Problem 5
+
+(a) Consider an upcoming, future lecture of Cameron's that has not happened yet.  Is it valid to say that the future lecture has a 55.3% chance of being 50 minutes + left-over seconds long? Why or why not?
+
+(b) Consider selecting a random lecture from Cameron's set of existing Spring 2024 recordings.  Is it valid to say that the randomly selected lecture has a 55.3% chance of being 50 minutes + left-over seconds long?** Why or why not?
+
+
+# Problem 6
+
+(a) Create and print a table of how often Cameron wore each `top_color` in `lectures`, with percentages included like Problem 5.
+
+    You should find that Cameron wore a navy colored shirt in 36.8% of SP24 lectures.
+
+(b) Is it valid to guess that approximately 36.8% of all Cameron's shirts he owns are navy-colored? Briefly explain your reasoning.
+
+
+# Problem 7
+
+Your friend wants to study how many classes UW-Madison students take each semester.  They propose the following probability distribution for $X$, the number of classes taken:
+
+| x        | 1    | 2    | 3   | 4   | 5   |
+| -------- |:----:|:----:|:---:|:---:|:---:|
+| P(X = x) | 0.15 | 0.05 | 0.4 | 0.3 | 0.1 |
+
+(a) Find the expected value and standard deviation of $X$.  You can use R.
+
+(b) 10 students are asked how many classes they are taking, giving data (4, 3, 5, 3, 4, 4, 1, 3, 4, 4), which has an average of 3.5.  Assuming your friend's model in (a) is true, which of these statements do you think is most reasonable?  Explain your reasoning.
+
+- The average of 10 students will be greater than or equal to 3.5 about 50% of the time.
+- The average of 10 students will be greater than or equal to 3.5 about 20% of the time.
+- The average of 10 students will be greater than or equal to 3.5 about 1% of the time.
+
+    Do not do any formal calculations - just identify which statement makes the most sense intuitively.
+
+(c) Based on your observed sample of 10 students with sample mean 3.5, do you think your friend's model from (a) is incorrect?  What would your sample data need to look like for you to doubt your friend's model?
+
+
+# Problem 8
+
+Your friend Kevin has started a new website called HowManyCheeseCurdsCanKevinEat.com and decides to model the number of daily users as a continuous distribution based on an expected value of 3.87 users.
+
+A picture of the model, with values 0 and 5 highlighted, can be found in `hw6p8.png`.
+
+(a) Based on the picture of the model, estimate the probability of the website having less than 5 users on a given day.  Does this seem reasonable?
+
+(b) Based on the picture of the model, estimate the probability of the website having less than 0 users on a given day.  Does this seem reasonable?
+
+(c) Explain why the number of daily users of HowManyCheeseCurdsCanKevinEat.com would be better modeled by a discrete variable.
+
+(d) Think of a different website for which "number of daily users" could be reasonably modeled as a continuous variable.  How does this context differ from Kevin's website?
+
+
+
+
+
+
+
+
+
+
+
+
