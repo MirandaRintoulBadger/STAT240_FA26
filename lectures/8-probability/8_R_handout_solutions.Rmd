@@ -1,0 +1,117 @@
+---
+title: "Section 8: Probability"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Random variables
+
+We can visually represent a discrete RV with line segments or bars.  The y-axis corresponds to probability.
+
+```{r}
+apgar_vals <- 0:10
+apgar_probs <- c(0.001, 0.006, 0.007, 0.008, 0.012, 0.02,
+                 0.038, 0.099, 0.319, 0.437, 0.053)
+
+apgar <- tibble(apgar_vals, apgar_probs)
+
+apgar_distribution <- ggplot(apgar, aes(x = apgar_vals, y = apgar_probs)) +
+  geom_col(fill = "goldenrod2", col = "black") +
+  labs(x = NULL, y = NULL, title = "Distribution of Apgar Scores") +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(), axis.ticks.x = element_blank(),
+        panel.background = element_blank()) +
+  scale_x_continuous(breaks = 0:10, labels = 0:10)
+
+apgar_distribution
+```
+
+
+EX 8.1
+
+Let $X$ be the count of heads in three coin flips.  Identify the support and probability distribution of $X$, and then simulate many draws from $X$ with `replicate()`.
+
+```{r}
+# Exact distribution
+ggplot(mapping = aes(x = 0:3, y = c(1/8, 3/8, 3/8, 1/8))) +
+  geom_col()
+```
+
+```{r}
+# Number of heads in 3 coin flips
+sum(sample(0:1, size = 3, replace = T))
+```
+
+```{r}
+# Distribution through simulation
+coin_experiment <- tibble(n_heads = replicate(10000,
+                                    sum(sample(0:1, size = 3, replace = T))))
+
+ggplot(coin_experiment, aes(x = n_heads)) +
+  geom_histogram()
+```
+
+
+
+## Properties of RVs
+
+What is the mean (expected value), variance, and SD of the Apgar score data?
+
+```{r}
+apgar_vals
+
+apgar_probs
+```
+
+
+```{r}
+apgar_mean <- sum(apgar_vals*apgar_probs)
+
+apgar_var <- sum((apgar_vals - apgar_mean)^2 * apgar_probs)
+
+apgar_sd <- sqrt(apgar_var)
+
+apgar_mean; apgar_var; apgar_sd
+```
+
+
+EX 8.3
+
+Consider an unfair six-sided die with probabilities given below.
+
+```{r}
+unfair_probs <- c(0.1, 0.1, 0.1, 0.2, 0.2, 0.3)
+```
+
+Calculate E(X) and V(X), then simulate 100 games where one player rolls a fair six-sided die and another player rolls the unfair die.  Count the number of wins and ties.
+
+```{r}
+unfair_mean <- sum((1:6)*unfair_probs)
+
+unfair_var <- sum(((1:6) - unfair_mean)^2 * unfair_probs)
+
+unfair_sd <- sqrt(unfair_var)
+```
+
+```{r}
+games <- tibble(
+  playerA = sample(1:6, size = 100, replace = T),
+  playerB = sample(1:6, size = 100, replace = T, prob = unfair_probs),
+  winner = case_when(playerA > playerB ~ "A",
+                     playerB > playerA ~ "B",
+                     .default = "tie")
+)
+
+games
+```
+
+
+
+
