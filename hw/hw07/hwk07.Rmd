@@ -1,0 +1,145 @@
+---
+title: "Homework 7"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw07` on your local computer.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+The random variable $X$ has the $\text{Binom}(100, 0.2)$ distribution.
+
+(a) Find an integer $a$ so that $P(X \le a) \ge 0.5$. (There are many choices for $a$).  Show the value of $P(X \le a)$ with a sum of `dbinom()`.
+
+(b) Find an integer $b$ so that $P(X \ge b) \ge 0.5$. (There are many choices for $b$). Show the value of $P(X \ge b)$ with a sum of `dbinom()`. 
+(c) Find an integer $c$ so that $P(X \le c) \ge 0.5$ *and* $P(X \ge c) \ge 0.5$. Show the values of $c$, $P(X \le c)$, and $P(X \ge c)$.
+
+
+# Problem 2
+
+Match the four binomial distributions given below to the appropriate graph in `p2_choices.png`. Briefly justify your choices.
+
+- Binom(12, 0.5)
+
+- Binom(12, 0.6)
+
+- Binom(10, 0.1)
+
+- Binom(10, 0.3)
+
+
+# Problem 3
+
+(a) Identify whether each of the statements below are *always true*, *sometimes true*, or *never true* for Binomial random variables.  Briefly explain your answers. You can optionally use R to help make your argument.
+
+- The distribution has no limits and covers the entire number line.
+
+- The 50th percentile is less than the 60th percentile.
+
+- The distribution is symmetric.
+
+- $P(X = 0)$ is nonzero. (You can ignore the case where $p = 1$).
+
+(b) Repeat part (a), but assess the truth of each statement for Normal random variables.
+
+- The distribution has no limits and covers the entire number line.
+
+- The 50th percentile is less than the 60th percentile.
+
+- The distribution is symmetric.
+
+- $P(X = 0)$ is nonzero.
+
+
+# Problem 4
+
+Use `pnorm()` to find the following probabilities on $X \sim N(0, 1)$.
+
+(a) $P(X < -1)$
+
+(b) $P(X > 1)$
+
+(c) $P(0.5 < X < 2)$
+
+(d) $P(|X| > 0.75)$
+
+
+# Problem 5
+
+Let $X_1$ and $X_2$ be two draws from $X \sim N(10, 4)$. Order the five events below based on which events are least to most likely to occur.
+
+- Event A: $X_1 > 15$
+- Event B: $X_1 = 15$
+- Event C: $X_1 < 15$
+- Event D: $X_1 > 15$ AND $X_2 > 15$
+- Event E: $X_1 > X_2$
+
+
+# Problem 6
+
+A politician asserts that 35% of registered voters in a state support a new climate policy. At a town hall meeting, all 160 attendees were surveyed and 64 (40%) supported the policy. Does the town hall represent the politicians claim?
+
+(a) Based on the politicians claim, write hypotheses for $p$, the proportion of registered voters in the state who support a new climate policy.
+
+(b) Perform a simulation study to answer your hypotheses in (a).  Simulate the null distribution 10000 times, calculate a p-value, and draw a conclusion at the 5% level.
+
+(c) Repeat the hypothesis test in (b) using the binomial distribution.  What is the null binomial distribution?  You should use `dbinom` to calculate the p-value.
+
+(d) Repeat the p-value calculation in (c), but use a normal approximation.  Is your result consistent?
+
+(e) What assumptions are required for each of the three methods (simulation, binomial, and normal)?  Which test requires the strongest assumptions? 
+
+
+# Problem 7
+
+The lifespan of a certain type of tire is approximately normal, with mean 39 and standard deviation 2.5 (units are in thousands of miles).
+  
+(a) What is the probability that a random tire will last longer than 40,000 miles?
+
+(b) What is the 95th percentile of tire lifespan?
+
+(c) Take a random sample of 4 tires.  What is the probability that the average lifespan of the four tires will be greater than 40,000 miles?
+
+(d) What is the 95th percentile for the average lifespan of four tires?  
+
+(e) Explain why the answers to (a) and (b) are so different from the ansewrs to (c) and (d).
+
+
+# Problem 8
+
+Suppose you are playing a coin flipping game with a friend, where you suspect the coin your friend provided is not a fair coin.  In fact, you think the probability the coin lands heads is less than 0.5.  To test this, you flip the coin 100 times and observe the coin lands heads 30 times.
+  
+(a) If you assume the coin is fair (i.e., the probability of the coin landing heads is 0.5), what is the probability of observing 30 heads or fewer, calculated using an exact model?
+
+(b) Calculate the previous probability, but use a normal approximation to achieve a numerical value. What is the error in this approximation?
+
+(c) How small would $p$ need to be (rounded to the nearest 0.01) for the probability of observing 30 or fewer heads to be greater than 0.05? *You could determine $p$ by trial and error, but there is also a quicker solution using `tibble()`.*
+
+
+
+
+
+
