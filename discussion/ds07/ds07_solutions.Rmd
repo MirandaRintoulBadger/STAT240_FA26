@@ -1,0 +1,139 @@
+---
+title: "Discussion 7"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds07`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to practice calculating unexpectedly complex probabilities from a simple game.  It will also cover concepts of random variables and expectation.
+
+
+Today's discussion is based on the game of "Greed".  Players take turns rolling a regular six-sided die.  The value of each roll is added to your score, the sum of your previous rolls.  You can roll the die up to 8 times, for a maximum score of 48.
+
+However, if you roll a 1, you "greed out".  Your score goes to 0 and you are out of the game! You can choose to stop rolling the die at any point if you are happy with your current score.
+
+
+# Problem 1
+#### (approx. 5 minutes)
+
+Start by playing a quick round of the game with your group.  If you don't have a die, you can use an online dice roller or simulate a die roll in R:
+
+```{r}
+sample(1:6, size = 1)
+```
+
+
+# Problem 2
+#### (approx. 15 minutes)
+
+Find the following probabilities about playing Greed.
+
+(a) What is the probability that a player manages to roll the die all 8 times without ever rolling a 1?
+
+[The player would need to independently hit the 5/6 chance of not rolling a 1 eight times in a row.  So the probability is $\Big(\frac{5}{6}\Big)^8 = 0.233.$]{.soln}
+
+(b) A player has successfully managed to roll 7 times.  What is the probability that they "greed out" on the eigth roll?
+
+[The probability on the eigth roll is not affected by the results of the previous rolls, so it is still just 1/6.]{.soln}
+
+(c) Tony has decided to stop rolling after getting a score of 12.  His rival Tammy currently has 9 points.  What is the probability that she beats Tony's score in either one or two more rolls?
+
+[If Tammy rolls a 4, 5, or 6 on her first roll, which happens with probability 1/2, she beats Tony immediately. If she rolls a 2 or 3 for her first roll (probability 1/3), she doesn't beat Tony, but anything other than a 1 on her second roll (probability 5/6) will end up beating Tony.  So, the total probability is 
+$$\Big(\frac{1}{2}\Big) \;+\; \Big(\frac{1}{3}\Big)\cdot\Big(\frac{5}{6}\Big) = 0.778$$]{.soln}
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Greedy Gretchen will always choose to roll the die if she is able to. Let $X$ refer to Gretchen's final score. Answer the following questions about random variable $X$.  Recall that the game ends with a final score of 0 whenever a 1 is rolled.
+
+(a) Is $X$ discrete or continuous?
+
+[$X$ is discrete since it can only take on specific values.]{.soln}
+
+(b) What is the support of $X$?
+
+[$X$ will be 0 if Gretchen "greeds out". The minimum score she gets if she manages to roll successfully is 2(8) = 16.  Any whole-number value from 16 to the maximum score of 48 is possible.]{.soln}
+
+(c) What is $P(X = 0)$?
+
+[The probability that Gretchen never rolls a 1 is 0.233, from problem 1.  So the probability that she scores 0, which only happens when she rolls a 1, is 1 - 0.233 = 0.767.]{.soln}
+
+
+# Problem 4
+#### (approx. 15 minutes)
+
+Think about what the pmf of $X$ would look like.  Make a rough, intuitive sketch of the probability distribution of $X$, without doing any calculation.
+
+Similarly, make an intuitive guess about the expected value $E(X)$.  Would it be close to 0? Close to the maximum of $X$? Close to the middle?
+
+**After** thinking through this on your own, change `eval=FALSE` in the chunk below to `eval=TRUE` to check your intuition.  This chunk simulates 10000 theoretical scores for Greedy Gretchen, plots them in a histogram, and calculates their average.
+
+```{r, eval=TRUE}
+# This code is outside the scope of 240,
+# but feel free to play with it if you wish
+
+gretchen_strategy <- function() {
+  score <- 0
+  for(rolls in 1:8){
+    this_roll <- sample(1:6, size = 1)
+    
+    if(this_roll == 1){
+      return(0)
+      
+    } else {
+      score <- score + this_roll
+    }
+  }
+  return(score)
+}
+
+results <- tibble(scores = replicate(10000,
+                            gretchen_strategy()))
+
+ggplot(results, aes(x = scores)) +
+  geom_histogram(binwidth = 4, boundary = 0,
+                 fill = "blue") +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = mean(results$scores), linetype = 2) +
+  annotate("text", x = 19, y = 5000, label = "Average of Simulated Scores") +
+  labs(title = "Simulated Distribution of X",
+       x = "Score",
+       y = "")
+
+```
+
+[About 77% of the probability is at 0, since she rolls a 1 at some point 77% of the time.  The rest of the probability is spread out between the values 16 and 48, although the middle values around 30-35 are much more likely.  This weird shape means that the expected value of $X$ is around 8, which is actually not possible for Gretchen to score.]{.soln}
+
+
+
+
+
+
+
+
+
+
+
+
