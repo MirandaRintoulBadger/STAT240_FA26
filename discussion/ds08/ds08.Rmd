@@ -79,8 +79,6 @@ Buzz selected the correct button out of the two 15 times out of 16.
 
 Your TA will record the ages of everyone in discussion.  Save these values under the `ages` vector below, and find the average age of all of the discussion participants.  When creating the vector, you might find it useful to use the `rep()` function.
 
-[I will put in a vector of fake ages to demonstrate.  The population average age of the students is 19.72.]{.soln}
-
 ```{r}
 #ages <- c()
 
