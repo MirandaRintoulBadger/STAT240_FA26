@@ -1,0 +1,230 @@
+---
+title: "Section 9: Binomial and Normal Distribution"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+## Binomial properties
+
+Use `choose` or `factorial` to count the number of ways to have x successes in n total trials.
+
+```{r}
+n <- 3
+x <- 2
+
+choose(n, x)
+
+factorial(n) / (factorial(x) * factorial(n - x))
+```
+
+
+We can use `dbinom` to calculate a specific binomial probability, or multiple probabilities.
+
+```{r}
+dbinom(x = 2, size = 3, prob = 0.6)
+
+dbinom(0:3, 3, 0.6)
+```
+
+
+Recall the powerplant example, where we calculated the distribution of the number of girl births assuming a null of 50/50 boy or girl.
+
+```{r}
+birth_null_proportions <- tibble(
+  prop_girls = replicate(10000,
+                         mean(sample(0:1, size = 300,
+                                     replace = T, prob = c(0.5, 0.5))))
+)
+
+# Two-sided pvalue
+mean(birth_null_proportions$prop_girls >= 0.52) +
+  mean(birth_null_proportions$prop_girls <= 0.48)
+```
+
+How would we calculate this with an exact binomial probability?  The null distribution can be described as $Binom(300, 0.5)$.  The results are very similar.
+
+```{r}
+# Probability of 150 girl births under null
+dbinom(150, 300, 0.5)
+
+# Two-sided pvalue, from binomial distribution
+sum(dbinom(156:300, 300, 0.5)) +
+  sum(dbinom(0:144, 300, 0.5))
+```
+
+EX 9.2 Binomial test example
+
+A psychic claims to be able to guess the suit of a card without knowing. In 200 card draws, they get 57 correct.  Perform a test of the null hypothesis $H_0: p = 0.25$ at the 1% level.
+
+First, use the simulation of the null distribution:
+
+```{r}
+# Simulation of null distribution of number of correct cards
+card_null_proportions <- tibble(
+  prop_correct = replicate(10000,
+                         mean(sample(0:1, size = 200,
+                                     replace = T, prob = c(0.75, 0.25))))
+)
+```
+
+```{r}
+# Simulated p-value
+mean(card_null_proportions$prop_correct >= 57/200) +
+  mean(card_null_proportions$prop_correct <= 43/200)
+```
+
+
+Next, find a p-value without simulation, with the binomial distribution.  The results should be very similar.
+
+```{r}
+# Binomial p-value
+sum(dbinom(57:200, 200, 0.25)) +
+  sum(dbinom(0:43, 200, 0.25))
+```
+
+
+
+## Normal distribution
+
+`pnorm` finds a lower-tail normal probability (area under the curve).
+
+```{r}
+# P(N(0, 1) <= 0.5)
+pnorm(0.5, 0, 1)
+```
+
+For the area above, use a negative or `lower.tail = F`.
+
+```{r}
+# P(N(0, 1) >= 0.5)
+1 - pnorm(0.5, 0, 1)
+pnorm(0.5, 0, 1, lower.tail = F)
+```
+
+Find a specific percentile with `qnorm`.
+
+```{r}
+# 30th percentile of N(0, 1)
+qnorm(0.3, 0, 1)
+```
+
+`pnorm` and `qnorm` are inverses!
+
+```{r}
+qnorm(0.3, 0, 1)
+
+pnorm(-0.5244005)
+```
+
+EX 9.3 Standardization practice
+
+The weight of flour in a batch of dough is $F \sim N(500, 12)$. The weight of water in a batch of dough is $W \sim N(350, 4)$. A flour weight of 476 corresponds to what weight of water?
+
+```{r}
+pnorm(476, 500, 12)
+
+qnorm(0.02275013, 350, 4)
+
+pnorm(476, 500, 12) %>%
+  qnorm(350, 4)
+```
+
+
+## Central Limit Theorem
+
+Recall the D&D example, where we looked at the distribution of ability scores.  For a single score, the distribution goes from 3-18 and is asymmetric.
+
+```{r}
+generate_score <- function() {
+  rolls <- sample(1:6, 4, replace = TRUE)   # Roll dice
+  keep <- sort(rolls)[2:4]       # Keep highest 3 rolls
+  sum(keep)
+}
+
+strength_values <- tibble(
+  run = 1:10000,
+  values = replicate(10000, generate_score())
+)
+
+ggplot(strength_values, aes(x = values)) +
+  geom_histogram(binwidth = 1, boundary = 2.5,
+                 fill = "goldenrod2", color = "black")
+```
+
+When we looked at the average of six scores, the resulting distribution was more closely concentrated around 12.2.
+
+```{r}
+all_character_scores <- function(){
+  setNames(replicate(n = 6, generate_score()),
+           c("STR", "DEX", "CON", "INT", "WIS", "CHA"))
+}
+
+average_scores <- tibble(
+  run = 1:10000,
+  values = replicate(10000, mean(all_character_scores())) 
+)
+
+ggplot(average_scores, aes(x = values)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+In general, when we draw a sample from a population, the sample mean has an approximately normal sampling distribution.  This approximation is better when:
+- The original population is more symmetric/normal
+- n is large
+
+Consider a skewed population like "miles per gallon".
+
+```{r}
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(fill = "goldenrod2", color = "black", bins = 20)
+```
+
+Let's look at the sample mean of 5 draws, and then 20 draws.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+When n = 5, the asymmetry is still present.
+
+```{r}
+average_mpg_5 <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(mtcars, 5)$mpg) ) 
+)
+
+ggplot(average_mpg_5, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+When n = 20, the sampling distribution looks normal (and also has less spread!)
+
+```{r}
+average_mpg_20 <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(mtcars, 20)$mpg) ) 
+)
+
+ggplot(average_mpg_20, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+Usually, n = 30 is "good enough" to apply the CLT in most cases.
+
+
+
+
+
+
+
