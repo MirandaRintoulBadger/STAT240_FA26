@@ -1,1 +1,1 @@
-Chapter 10 (Two-sample proportion inference)
+Chapter 11 (Two-sample proportion inference)
