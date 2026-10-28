@@ -4,16 +4,6 @@ author: "Student's Name Here"
 output: html_document
 ---
 
-```{css, echo = F}
-.rsoln {
-background-color: #E6E6FA;
-}
-
-.soln {
-color: #5858d0;
-}
-```
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE,
                       warning = FALSE, error = TRUE,
@@ -21,11 +11,6 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE,
 library(tidyverse)
 ```
 
-```{r, echo=F}
-old <- theme_get()
-
-theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
-```
 
 # Preliminaries
 
