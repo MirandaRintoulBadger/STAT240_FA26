@@ -1,0 +1,162 @@
+---
+title: "Section 10: One-Sample Proportion Test"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Normal approximation of binomial
+
+When np(1-p) >= 10, a normal can be well-approximated by a binomial.  Consider Binom(500, 0.96).
+
+```{r}
+# P(X <= 478) with exact binomial probability
+sum(dbinom(0:478, 500, 0.96))
+
+# P(X <= 478 with normal approximation)
+pnorm(478, 500*0.96, sqrt(500*0.96*0.04))
+```
+
+
+## Proportion sampling distribution
+
+Since a sample proportion is a binomial RV multiplied by a constant, the graph of the proportion sampling distribution also looks like a binomial.
+
+Let's simulate the proportion of heads in 10 fair coin flips.
+
+```{r}
+flips <- tibble(
+  prop_heads = replicate(10000,
+                         mean(sample(0:1, size = 10,
+                                     replace = T, prob = c(0.5, 0.5))
+                              ))
+)
+
+ggplot(flips, aes(x = prop_heads)) +
+  geom_histogram(fill = "goldenrod2", color = "black",
+                 bins = 11)
+```
+
+
+## Proportion Z-test
+
+In the powerplant example, 52% of 300 births are girls.  We have a null hypothesis of $p = 0.5$, which gives a null distribution
+
+$$\hat{p} \;\dot{\sim}\; N(0.5, \sqrt{\frac{0.5(0.5)}{300}})$$
+
+This gives observed test statistic 0.693.
+
+```{r}
+se <- sqrt(0.5*0.5 / 300)
+
+test_stat <- (0.52 - 0.5) / se
+
+test_stat
+```
+
+To calculate a two-sided p-value, we need the area above 0.693 and the area below -0.693.  We can take advantage of the fact that the standard normal is symmetric around 0.
+
+```{r}
+pnorm(-test_stat) + pnorm(test_stat, lower.tail = F)
+
+# By symmetry
+2*pnorm(test_stat, lower.tail = F)
+```
+
+EX 10.2
+
+A survey of 15 high-school students showed that 11 of them use social media. Consider using this data to test hypotheses
+
+$$H_0: p = 0.8 \quad \text{versus} \quad H_A: p \neq 0.8$$
+
+with $\alpha = 0.01$.  Complete this test with both a binomial and a standard normal (Z) null distribution.
+
+```{r}
+# Binomial p-value
+sum(dbinom(0:11, 15, 0.8)) +
+  sum(dbinom(13:15, 15, 0.8))
+```
+
+```{r}
+# Z-test (approximate)
+se <- sqrt(0.8*0.2/15)
+
+test_stat <- (11/15 - 0.8) / se
+
+test_stat
+```
+
+```{r}
+# Two-sided Z p-value
+2*pnorm(test_stat)
+```
+
+
+Can we trust the result of the Z test?  How big does $n$ need to be before the normal approximation is appropriate?
+
+```{r}
+desired_n <- 10 / (0.8*0.2)
+
+desired_n
+```
+
+
+
+## Proportion Z CI
+
+To create a 99% Z confidence interval, use the 0.5th and 99.5th percentiles of the standard normal.  They are positive and negative versions of the same number, since the standard normal curve is symmetric.
+
+```{r}
+qnorm(0.005)
+qnorm(0.995)
+```
+
+```{r}
+cv <- qnorm(0.995)
+
+se <- sqrt(0.52*0.48 / 300)
+
+phat <- 0.52
+
+# 99% interval for p
+c(phat - cv*se, phat + cv*se)
+```
+
+
+EX 10.3
+
+Re-create the CI for the powerplant example, but use a 95% confidence level.
+
+```{r}
+# Critical values for 95% confidence
+qnorm(0.025)
+qnorm(0.975)
+```
+
+```{r}
+# 95% Z confidence interval
+cv <- qnorm(0.975)
+se <- sqrt(0.52 * 0.48 / 300)
+phat <- 0.52
+
+c(phat - cv*se, phat + cv*se)
+```
+
+```{r}
+# SE for proportion CI
+sqrt(0.52 * 0.48 / 300)
+
+# SE for proportion test with H0: p = 0.5
+sqrt(0.5 * 0.5 / 300)
+```
+
+
+
+
