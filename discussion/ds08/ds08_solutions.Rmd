@@ -1,0 +1,234 @@
+---
+title: "Discussion 8"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds08`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to get familiar with the normal distribtuion.  You'll have a chance to practice standardization and also use R to find different normal probabilities.  The last problem will cover the Central Limit Theorem and how it applies to the distribution of the sample mean.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+(a) Many real-life processes follow an approximately normal shape.  Match the six descriptions below to the six normal parameterizations that make the most sense for the given units.
+
+Description choices:
+
+- I: Test scores out of 100
+- II: Driving time from Madison to Chicago, in hours
+- III: Energy in a footlong Subway sandwich, in calories
+- IV: Annual salary of entry-level workers, in dollars
+- V: Length of human pregnancy, in days
+- VI: Amount of sleep per night, in hours
+
+Normal parameterization choices (mean, sd):
+
+- A: $N(905, 120)$ [describes the calories in a footlong Subway sandwich.]{.soln}
+- B: $N(80, 4.5)$ [describes test scores out of 100.]{.soln}
+- C: $N(270, 12)$ [describes the length of a pregnancy in days.]{.soln}
+- D: $N(3, 0.26)$ [describes the driving time from Madison to Chicago in hours.]{.soln}
+- E: $N(6.5, 1.2)$ [describes the hours of sleep per night.]{.soln}
+- F: $N(50000, 9500)$ [describes the annual salary of entry-level workers.]{.soln}
+
+
+(b) Below is a list of eight different values from different normal curves, including the ones in (a).  Using standardization, create four pairs of matching values based on what z-score they represent.
+
+- A value that is 1.5 standard deviations below average
+- A z-score of 0.8
+- Sleeping 6 hours in a night
+- The 6.7th percentile of calories in a Subway sandwich
+- A pregnancy that lasts 279.6 days
+- Taking 3 hours and 20 minutes to drive from Madison to Chicago
+- An entry-level salary that is below 10% of all other entry-level salaries
+- Getting a test score of 78.1
+
+
+[The 6.7th percentile of calories in a Subway sandwich corresponds to a value 1.5 SDs below average, which is a z-score of -1.5.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+qnorm(0.067)
+
+qnorm(0.067, 905, 120) # About 725 calories, in original units
+```
+
+---
+
+[A z-score of 0.8 corresponds to a pregnancy that lasts 279.6 days.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+(279.6 - 270)/12
+```
+
+---
+
+[Sleeping 6 hours in a night corresponds to a test score of 78.1, since each have a z-score of about -0.42.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+(6 - 6.5)/1.2
+
+(78.1 - 80)/4.5
+```
+
+---
+
+[Taking 3 hours and 20 minutes to drive from Madison to Chicago corresponds with an entry level salary that is below 10% of all other entry-level salaries.  These both refer to the 90th percentile, or a z-score of about 1.28.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+(3.333 - 3)/0.26
+
+pnorm((3.33 - 3)/0.26)
+
+qnorm(0.9)
+```
+
+
+# Problem 2
+#### (approx. 15 minutes)
+
+In an experiment, two dolphins, Buzz and Doris, were trained to push one of the two buttons in a pool. If the experimenter shined a constant light, the dolphins were trained to push the right button to get a fish. If he shined a blinking light, the dolphins were trained to push the left button to get a fish.
+
+To see if they could communicate, the dolphins were separated by placing a curtain down the middle. Only Buzz had access to the buttons, and only Doris could see the light. Doris needed to let Buzz know which button to push. Both dolphins got the reward only when the correct button was pushed. 
+
+Buzz selected the correct button out of the two 15 times out of 16.
+
+(a) Formulate a null and alternative hypothesis to study whether or not Buzz was randomly guessing what button to press.
+
+[Since there are two buttons, the probability of Buzz correctly guessing a button at random is $p = 0.5$.  So we have
+$$H_0: p = 0.5 \quad \text{versus} \quad H_A: p \neq 0.5$$
+]{.soln}
+
+(b) Comment on each of the BINS assumptions and how well they apply to this problem.  Does a binomial model seem reasonable?
+
+[B: Binary trials are easily met since each trial either has a correctly guessed or incorrectly guessed button.]{.soln}
+
+[I: Each guess is independent of the others.  This is probably met, but it does somewhat depend on the experiment being run in a certain way.  It's possible that the dolphins got better at communicating over time.]{.soln}
+
+[N: There are $n = 16$ trials.]{.soln}
+
+[S: We have to assume that Buzz has the same probability of picking the correct button each time.  This is probably correct, assuming the dolphins do not get better over the course of the experiment (like with the I assumption).]{.soln}
+
+[Based on these assumptions, I think a binomial model would be reasonable, although it would be good to know more detail about exactly how the experiment was run.]{.soln}
+
+(c) Identify the binomial null distribution and calculate a p-value.  Draw a conclusion at the 1% level.
+
+[Under the null, the number of correct guesses is $Binom(16, 0.5)$.  Buzz got 15 out of 16 correct, so the two-sided p-value is the probability greater than or equal to 15 plus the probability less than or equal to 1 (in the lower tail).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(15:16, 16, 0.5)) +
+  sum(dbinom(0:1, 16, 0.5))
+```
+
+[We have a very small p-value less than $\alpha = 0.01$, so we reject the null hypothesis.  We have evidence that the probability of Buzz picking the correct button is different from random guessing.]{.soln}
+
+(d) Would it be valid to use a normal approximation to calculate the p-value in (c)?  Why or why not?
+
+[No, since we have a fairly small $n$, the null binomial distribution is not well approximated by a continuous normal curve.  We have $np(1-p) = 16(0.5)(0.5) = 4$ which is smaller than the usual desired threshold of 10.]{.soln}
+
+
+# Problem 3
+#### (approx. 15 minutes)
+
+Your TA will record the ages of everyone in discussion.  Save these values under the `ages` vector below, and find the average age of all of the discussion participants.  When creating the vector, you might find it useful to use the `rep()` function.
+
+[I will put in a vector of fake ages to demonstrate.  The population average age of the students is 19.72.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ages <- c(rep(18, 5), rep(19, 8), rep(20, 6),
+          rep(21, 3), rep(22, 2), rep(24, 1))
+
+mean(ages)
+```
+
+The code below samples 10 points from the `ages` vector and finds the sample mean of those 10 observations.  It repeats this process for 10000 runs, and saves the 10000 theoretical sample means in a dataframe called `samp_means`.
+
+```{r}
+set.seed(240)
+
+samp_means <- tibble(xbars = replicate(10000,
+                        mean(sample(ages, size = 10,
+                                    replace = T)))
+)
+
+# Technical note: for the CLT to work, the sample must be made up of
+# independent draws from the same distribution. So, the code samples from
+# the ages vector *with replacement*.  It is possible for an individual person
+# to be drawn more than once.
+# This is not a resample, we are pretending that "ages"
+# is our actual full population.
+```
+
+(a) Use `ggplot()` to create a histogram of the sampling distribution of the sample means.  Add a vertical line indicating the true average age, then add a different vertical line indicating the average of the experimental sample means.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pop_mean <- mean(ages)
+sampling_mean <- mean(samp_means$xbars)
+
+ggplot(samp_means, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue") +
+  geom_vline(xintercept = c(pop_mean, sampling_mean),
+             linetype = c(1, 2))
+```
+
+[Solid line: true mean of the population; Dashed line: average of simulated sample means.]{.soln}
+
+(b) Comment on the shape of the sampling distribution.  How similar is it to a normal bell curve?  Make a change to the sampling simulation code so that the histogram of sample means looks more like a bell curve.
+
+[The histogram of sample means is roughly normal, with a peak around the true mean of 19.72.  There are a few very tall histogram bars that have probably appeared because of the specific data I started with and the way the bar breakpoints are calculated.  The average of the simulated sample means is very similar to the true population average age.]{.soln}
+
+[The approximate normal shape gets better when we take a larger sample during each of our experimental runs.  I'll repeat the experiment but use n = 30 instead.  We see that the new histogram is much more like a bell curve and is also more concentrated around 19.72.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+set.seed(240)
+
+samp_means <- tibble(xbars = replicate(10000,
+                        mean(sample(ages, size = 30,
+                                    replace = T)))
+)
+
+
+sampling_mean <- mean(samp_means$xbars)
+
+ggplot(samp_means, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue") +
+  geom_vline(xintercept = c(pop_mean, sampling_mean),
+             linetype = c(1, 2))
+```
+
+
+
+
+
+
+
+
+
+
+
