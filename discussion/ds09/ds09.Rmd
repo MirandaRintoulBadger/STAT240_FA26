@@ -1,0 +1,73 @@
+---
+title: "Discussion 9"
+author: "Group Member Names Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+-   This file should be in `STAT240/discussion/ds09`.
+-   This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to develop a stronger conceptual understanding of Z proportion inference and confidence intervals.
+
+
+# Final Project
+
+The final project, to be completed in your usual discussion groups, has been assigned on Canvas.  Take a minute or two to exchange contact information and then start working on today's problems.
+
+
+# Problem 1
+#### (approx. 10 minutes)
+
+In lecture, we looked at an example of a proportion experiment where the normal approximation is not well-met.  In a sample of 15 high-school students, 11 said they use social media.  Based on this data, a 99% Z confidence interval for $p$ is given by (0.439, 1.027).
+
+```{r}
+phat <- 11/15
+se <- sqrt(phat*(1-phat)/15)
+cv <- qnorm(0.995)
+
+c(phat - cv*se, phat + cv*se)
+```
+
+Why is the upper endpoint of the interval greater than 1, which is an impossible value for $p$?  How should we interpret this result?  How does this relate to the small sample size and the fact that we are using the normal approximation?
+
+
+# Problem 2
+#### (approx. 25 minutes)
+
+A politician claims that "half of all residents in my region worry about being a victim of crime." A random survey of $n = 100$ residents shows that $x = 45$ of them worry about being a victim of crime.
+
+(a) Build a 95% confidence interval for the proportion of residents who are worried. Use the following formula, which can be viewed in ds08.html:
+
+$$\text{estimate } \pm \text{ z value }\times \text{ standard error } \quad \rightarrow\quad \hat{p} \pm z \times \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$
+
+Make sure your z value, calculated with `qnorm()`, reflects a confidence level of 95%, i.e. $\alpha = 0.05$.
+
+(b) Does your confidence interval support the politician's claim?
+
+(c) Let's create a fictitious population where exactly 48% of them are worried about being a victim of crime. The code below takes 10000 random samples of size 100, calculates the sample proportion of worried residents out of 100, and finds the upper and lower bounds of a confidence interval.
+
+    Complete the code by writing in a line to calculate the standard error, similar to what you did in part (a). You can use variable `phat` for the sample proportion and and 100 as the sample size. You don't need to change any other lines of code.
+
+```{r}
+intervals <- tibble(
+  phat = replicate(10000, mean(sample(0:1, size = 100,
+                       replace = T, prob = c(0.52, 0.48)))),
+  se = # Calculate the standard error here! 
+  ci_lower = phat - se*qnorm(0.975),
+  ci_upper = phat + se*qnorm(0.975)
+)
+```
+
+(d) After completing part (c), you should have a dataset called `intervals` with 10000 rows that has the lower and upper bound of 10000 theoretical CIs made from samples of 100. Use dplyr to mutate a new column that labels whether the interval covers the true value of 0.48. Then, calculate the proportion of intervals that cover 0.48.
+
+(e) Now, instead of the true proportion 0.48, consider the politician's claim of a proportion 0.5. Based on the simulation, if the true proportion is actually 0.48, what is the probability that a random sample of 100 will support the claim of a proportion of 0.5?
