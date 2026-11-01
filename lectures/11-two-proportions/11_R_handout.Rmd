@@ -1,0 +1,202 @@
+---
+title: "Section 11: Two-Sample Proportion Inference"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+
+## Heart failure example
+
+The heart failure dataset contains information on 299 patients with heart failure.  The variable of interest is `DEATH_EVENT`, which records whether the patient survived (0) or died (1) over a 130-day followup period.
+
+```{r}
+heart <- read_csv("../../data/heart_failure.csv")
+```
+
+There are many different medically interesting variables, but we will focus on smoking status.
+
+```{r}
+heart_summary <- heart %>%
+  # Make the labels of the smoking column 
+  mutate(smoking = case_when(smoking == 1 ~ "smoker",
+                             smoking == 0 ~ "nonsmoker")) %>%
+  group_by(smoking) %>%
+  summarize(died = sum(DEATH_EVENT),
+            total = n(),
+            phat = died/total)
+
+heart_summary
+```
+
+66 out of 203 nonsmoking patients died, and 30 out of 96 smoking patients died.
+
+
+## Difference in proportions sampling distribution
+
+Two players compete in a trivia contest.  Player 1 knows 60% of facts, while player 2 knows 70% of facts.  $p_1 = 0.6$, $p_2 = 0.7$.
+
+Each player guesses 10 different pieces of trivia.
+
+```{r}
+example_phat1 <- mean(sample(0:1, size = 10,
+                             replace = T, prob = c(0.4, 0.6)))
+
+example_phat2 <- mean(sample(0:1, size = 10,
+                             replace = T, prob = c(0.3, 0.7)))
+
+example_phat1
+example_phat2
+example_phat1 - example_phat2
+```
+
+Let's repeat this experiment 10000 times to visualize the sampling distribution of $\hat{p}_1 - \hat{p}_2$.
+
+```{r}
+trivia <- tibble(
+  phat1 <- replicate(10000, mean(sample(0:1, size = 10,
+                             replace = T, prob = c(0.4, 0.6)))),
+  phat2 <- replicate(10000, mean(sample(0:1, size = 10,
+                             replace = T, prob = c(0.3, 0.7)))),
+  diff = phat1 - phat2
+)
+```
+
+```{r}
+ggplot(trivia, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+Now, let's increase the sample size to 50 questions for each.
+
+```{r}
+trivia2 <- tibble(
+  phat1 <- replicate(10000, mean(sample(0:1, size = 50,
+                             replace = T, prob = c(0.4, 0.6)))),
+  phat2 <- replicate(10000, mean(sample(0:1, size = 50,
+                             replace = T, prob = c(0.3, 0.7)))),
+  diff = phat1 - phat2
+)
+```
+
+```{r}
+ggplot(trivia2, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black",
+                 binwidth = 0.02)
+```
+
+EX 11.1
+
+Based on the empirical simulation above, what is the probability that player 1 wins the game?
+
+```{r}
+
+```
+
+What is this same probability, but using a normal approximation?
+
+
+## Two-sample proportion Z test
+
+Let's return to the heart failure data.
+
+```{r}
+heart_summary
+```
+
+We can check the sample sizes for each group to make sure we have enough data to use the normal approximation.
+
+```{r}
+heart_summary %>%
+  mutate(sample_size_check = total*phat*(1-phat)) %>%
+  relocate(sample_size_check)
+```
+
+
+EX 11.2
+
+Under the null, the probability of dying during the followup period is the same for smokers and nonsmokers.  How can we estimate this common proportion in the heart failure example?
+
+Save this value as variable `phat`.
+
+```{r}
+# Extract values from summary table
+x1 <- heart_summary$died[1]
+x2 <- heart_summary$died[2]
+
+n1 <- heart_summary$total[1]
+n2 <- heart_summary$total[2]
+
+phat1 <- heart_summary$phat[1]
+phat2 <- heart_summary$phat[2]
+```
+
+
+Let's complete the Z test, with an estimated common proportion of "phat".
+
+```{r}
+se_null <- sqrt(phat*(1-phat)*(1/n1 + 1/n2))
+
+test_stat <- (phat1 - phat2 - 0) / se_null
+```
+
+```{r}
+2*pnorm(test_stat, lower.tail = F)
+```
+
+
+Let's look at a simulation approach to the same question.  We need to do a "big box" resampling approach where each group proportion (nonsmoking and smoking) is drawn from a box with the same base probability.
+
+```{r}
+heart_simulation <- tibble(
+  # Nonsmoking group
+  phat1 <- replicate(10000, mean(sample(0:1, size = 203,
+                             replace = T, prob = c(0.679, 0.321)))),
+  # Smoking group
+  phat2 <- replicate(10000, mean(sample(0:1, size = 96,
+                             replace = T, prob = c(0.679, 0.321)))),
+  diff = phat1 - phat2
+)
+```
+
+Under the null, the histogram of resampled differences is centered around 0.
+
+```{r}
+ggplot(heart_simulation, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = 0.012, color = "forestgreen",
+             linewidth = 1.5, linetype = "dashed")
+```
+
+Let's calculate an empirical p-value based on an observed difference of 0.325 - 0.313 = 0.012.
+
+```{r}
+mean(heart_simulation$diff <= -0.012) +
+  mean(heart_simulation$diff >= 0.012)
+```
+
+
+## Two-sample proportion Z CI
+
+Let's build a CI for the difference in proportions $p_1 - p_2$.
+
+```{r}
+se <- sqrt( phat1*(1-phat1)/n1 + phat2*(1-phat2)/n2 )
+
+cv <- qnorm(0.995)
+
+c(phat1 - phat2 - cv*se, phat1 - phat2 + cv*se)
+```
+
+
+
+
+
+
