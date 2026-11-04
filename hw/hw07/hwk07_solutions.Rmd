@@ -1,0 +1,346 @@
+---
+title: "Homework 7"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw07` on your local computer.
+
+# Problem 1
+
+The random variable $X$ has the $\text{Binom}(100, 0.2)$ distribution.
+
+(a) Find an integer $a$ so that $P(X \le a) \ge 0.5$. (There are many choices for $a$).  Show the value of $P(X \le a)$ with a sum of `dbinom()`.
+
+[For $P(X \le a)$ to be at least 0.5,  most of the probability of $X$ must be at or below $a$.  One choice is $a = 30$, since $P(X \le 30) = 0.994$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(0:30, 100, 0.2))
+```
+
+(b) Find an integer $b$ so that $P(X \ge b) \ge 0.5$. (There are many choices for $b$). Show the value of $P(X \ge b)$ with a sum of `dbinom()`. 
+
+[For $P(X \ge b)$ to be at least 0.5,  most of the probability of $X$ must be at or above $b$.  One choice is $b = 15$, since $P(X \ge 15) = 0.92$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(15:100, 100, 0.2))
+```
+
+(c) Find an integer $c$ so that $P(X \le c) \ge 0.5$ *and* $P(X \ge c) \ge 0.5$. Show the values of $c$, $P(X \le c)$, and $P(X \ge c)$.
+
+[For $P(X \le c)$ and $P(X \ge c)$ to both be at least 0.5, $c$ must be a number close to the center of the probability.  Let's look at $np = 100(0.2) = 20$.]{.soln}
+
+[Using `dbinom()`, we can verify that $P(X \le 20)$ and $P(X \ge 20)$ are both more than 0.5.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# P(X <= 20)
+sum(dbinom(0:20, 100, 0.2))
+
+# P(X >= 20)
+sum(dbinom(20:100, 100, 0.2))
+```
+
+
+# Problem 2
+
+Match the four binomial distributions given below to the appropriate graph in `p2_choices.png`. Briefly justify your choices.
+
+- Binom(12, 0.5)
+
+[Graph C.  It must be one of the top 3 graphs, since the upper 3 have values from 0 to 12.  For the probability to be 0.5, the graph of the distribution would have to be symmetric.]{.soln}
+
+- Binom(12, 0.6)
+
+[Graph B.  The probability is shifted slightly to the right of Graph C (e.g. 7 has more probability than 6) which reflects the fact that we have the same n but a larger p.]{.soln}
+
+- Binom(10, 0.1)
+
+[Graph D.  It must be one of the lower 3 graphs, since they have values from 0 to 10.  Graph D has its probabilities very concentrated on the left side of the graph near 0 and 1.]{.soln}
+
+- Binom(10, 0.3)
+
+[Graph E.  The probability is shifted to the right compared to Graph D, but it is still primarily on the left side of the graph.  It can't be Graph F because F is perfectly symmetric.]{.soln}
+
+
+# Problem 3
+
+(a) Identify whether each of the statements below are *always true*, *sometimes true*, or *never true* for Binomial random variables.  Briefly explain your answers. You can optionally use R to help make your argument.
+
+- The distribution has no limits and covers the entire number line.
+
+[This is never true. A binomial random variable counts the number of successes in a fixed number of trials, so it has a limit in either direction. The minimum is 0 and the maximum is the number of trials $n$.]{.soln}
+
+- The 50th percentile is less than the 60th percentile.
+
+[This is sometimes true.  Because binomials are discrete, two different percentiles can both correspond to the same $x$ from the population.]{.soln}
+
+- The distribution is symmetric.
+
+[This is sometimes true, in the case of a binomial random variable with success probability $p = 0.5$.  But this is false for binomials with $p \neq 0.5$, where the probability mass will be concentrated on either the left or right side of the graph.]{.soln}
+
+- $P(X = 0)$ is nonzero. (You can ignore the case where $p = 1$).
+
+[This is always true, since 0 is always in the discrete support of a binomial random variable.  It is always possible that we observe 0 successes total out of $n$ trials.]{.soln}
+
+(b) Repeat part (a), but assess the truth of each statement for Normal random variables.
+
+- The distribution has no limits and covers the entire number line.
+
+[This is always true.  The tails stretch all the way to negative and positive infinity, although they get very very close to 0 outside of the bell-curve shape.]{.soln}
+
+- The 50th percentile is less than the 60th percentile.
+
+[This is always true, since Normal RVs are continuous.  The 50th and 60th percentiles make a "slice" of 10% of the area under the curve, so they must be different numbers.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# 50th and 60th percentile of a standard normal
+qnorm(c(0.5, 0.6))
+```
+
+- The distribution is symmetric.
+
+[This is always true for Normal RVs, since each one is a perfectly symmetric bell curve with its peak at $\mu$.]{.soln}
+
+- $P(X = 0)$ is nonzero.
+
+[This is never true, since Normal RVs are continuous, and the probability of any individual point is 0.]{.soln}
+
+
+# Problem 4
+
+Use `pnorm()` to find the following probabilities on $X \sim N(0, 1)$.
+
+(a) $P(X < -1)$
+
+[To find the area below a value, use `pnorm()`'s default functionality.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(-1)
+```
+
+
+(b) $P(X > 1)$
+
+[To find an area above, use subtraction or set `lower.tail = F`. This is also the same as the probability in (a).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+1 - pnorm(1)
+# or
+pnorm(1, lower.tail = F)
+```
+
+
+(c) $P(0.5 < X < 2)$
+
+[To find an area between two points, subtract two calls to `pnorm()`.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(2) - pnorm(0.5)
+```
+
+
+(d) $P(|X| > 0.75)$
+
+[We can add two calls to `pnorm()` or take advantage of the fact that the curve is symmetric around 0.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(-0.75) + pnorm(0.75, lower.tail = F)
+# or
+2 * pnorm(-0.75)
+```
+
+
+# Problem 5
+
+Let $X_1$ and $X_2$ be two draws from $X \sim N(10, 4)$. Order the five events below based on which events are least to most likely to occur.
+
+- Event A: $X_1 > 15$
+- Event B: $X_1 = 15$
+- Event C: $X_1 < 15$
+- Event D: $X_1 > 15$ AND $X_2 > 15$
+- Event E: $X_1 > X_2$
+
+[Since $X$ is continuous, event B is impossible, since we can't define probabilities at a specific point.  We can find the probabilities of events A and C using pnorm.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+# Event A
+pnorm(15, 10, 4, lower.tail = F)
+
+# Event C
+pnorm(15, 10, 4)
+```
+
+[$P(A) = 0.106$ and $P(C) = 0.894$.  If event D happens, then that means we draw a value above 15 two times in a row, so $P(D) = 0.106 \cdot 0.106 = 0.011$.  Finally, $P(E)$ is 0.5 by symmetry.  We have B < D < A < E < C.]{.soln}
+
+
+# Problem 6
+
+A politician asserts that 35% of registered voters in a state support a new climate policy. At a town hall meeting, all 160 attendees were surveyed and 64 (40%) supported the policy. Does the town hall represent the politicians claim?
+
+(a) Based on the politicians claim, write hypotheses for $p$, the proportion of registered voters in the state who support a new climate policy.
+
+[If $p$ is the true proportion of registered voters, we have two-sided hypotheses
+$$H_0: p = 0.35 \quad \text{versus} \quad H_A: p \neq .035$$]{.soln}
+
+(b) Perform a simulation study to answer your hypotheses in (a).  Simulate the null distribution 10000 times, calculate a p-value, and draw a conclusion at the 5% level.
+
+[I'll simulate 10000 draws of 160 people from a theoretical population with 35% level of support.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+vote_null_proportions <- tibble(
+  prop_support = replicate(10000,
+                         mean(sample(0:1, size = 160,
+                                     replace = T,
+                                     prob = c(0.65, 0.35))))
+)
+```
+
+[Next, calculate a two-sided p-value based on the observed proportion of 40%.  We want to find the probability under the null that a random sample 40% or more or 30% or less support.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+mean(vote_null_proportions$prop_support <= 0.3) +
+  mean(vote_null_proportions$prop_support >= 0.4)
+```
+
+[The p-value is about 0.21, which is larger than our significance level $\alpha = 0.05$.  We fail to reject the null hypothesis since we do not have evidence that the true proportion of support is different from 35%.]{.soln}
+
+(c) Repeat the hypothesis test in (b) using the binomial distribution.  What is the null binomial distribution?  You should use `dbinom` to calculate the p-value.
+
+[The null binomial distribution is $Binom(160, 0.35)$.  The p-value is calculated as the probability greater than or equal to $160(0.4) = 64$ and the probability less than or equal to $160(0.3) = 48$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(0:48, 160, 0.35)) +
+  sum(dbinom(64:160, 160, 0.35))
+```
+
+[The p-value is similar to the one we found by simulation.]{.soln}
+
+(d) Repeat the p-value calculation in (c), but use a normal approximation.  Is your result consistent?
+
+[The null distribution of $Binom(160, 0.35)$ can be approximated by $N(np, \sqrt{np(1-p)})$ = $N(160(0.35), \sqrt{160(0.35)(0.65)})$ = $N(56, 6.033)$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(48, 56, 6.033) +
+  pnorm(64, 56, 6.033, lower.tail = F)
+```
+
+[The p-value is 0.18, which is slightly smaller than the p-value found through simulation or the exact binomial distribution.  However, we still decide to fail to reject the null.]{.soln}
+
+(e) What assumptions are required for each of the three methods (simulation, binomial, and normal)?  Which test requires the strongest assumptions? 
+
+[Both the binomial null and the simulation rely on the BINS assumptions being true.  We are assuming that each of the 160 voters is independent from the others and that they all have the same equal probability of supporting the policy.]{.soln}
+
+[The normal p-value calculation requires an additional assumption, which is that the binomial null distribution is well approximated by a normal.  So the normal p-value approach requires the strongest assumptions.]{.soln}
+
+
+# Problem 7
+
+The lifespan of a certain type of tire is approximately normal, with mean 39 and standard deviation 2.5 (units are in thousands of miles).
+  
+(a) What is the probability that a random tire will last longer than 40,000 miles?
+
+[Use `pnorm` to find the probability above 40 on the original tire lifespan distribution.  Set `lower.tail = F` to find a probability in the upper tail.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(40, 39, 2.5, lower.tail = F)
+```
+
+(b) What is the 95th percentile of tire lifespan?
+
+[Use `qnorm` to find the value that has area 0.95 to the left on the tire distribution.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+qnorm(0.95, 39, 2.5)
+```
+
+(c) Take a random sample of 4 tires.  What is the probability that the average lifespan of the four tires will be greater than 40,000 miles?
+
+[Now, we are working with the sampling distribution, $\bar{X}$.  This has distribution $N\Big(\mu, \frac{\sigma}{\sqrt{n}}\Big) = N(39, 2.5/\sqrt{4})$.  We need to repeat the above problems on this new normal distribution.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(40, 39, 2.5/sqrt(4), lower.tail = F)
+```
+
+(d) What is the 95th percentile for the average lifespan of four tires?  
+
+```{r, class.source="rsoln", class.output="rsoln"}
+qnorm(0.95, 39, 2.5/sqrt(4))
+```
+
+(e) Explain why the answers to (a) and (b) are so different from the ansewrs to (c) and (d).
+
+[We are more likely to see a single tire last longer than 40k miles when compared to the average lifespan.  The sampling distribution has less spread around the mean of 39, resulting in "tail" values being less likely.  Similarly, the 95th percentile of $\bar{X}$ is closer to 39 than the 95th percentile of the original distribution.]{.soln}
+
+
+# Problem 8
+
+Suppose you are playing a coin flipping game with a friend, where you suspect the coin your friend provided is not a fair coin.  In fact, you think the probability the coin lands heads is less than 0.5.  To test this, you flip the coin 100 times and observe the coin lands heads 30 times.
+  
+(a) If you assume the coin is fair (i.e., the probability of the coin landing heads is 0.5), what is the probability of observing 30 heads or fewer, calculated using an exact model?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(0:30, 100, 0.5))
+```
+
+[This is a very small probability.]{.soln}
+
+(b) Calculate the previous probability, but use a normal approximation to achieve a numerical value. What is the error in this approximation?
+
+[The binomial is approximated by a normal with mean $np = 50$ and standard deviation $\sqrt{np(1-p)} = \sqrt{25}$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pnorm(30, 50, sqrt(25))
+```
+
+[The probability is small and is similar to the exact probability in (a).  The difference between the exact and approximate probabilities is only $7.6\times 10^{-6}$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+sum(dbinom(0:30, 100, 0.5)) - pnorm(30, 50, sqrt(25))
+```
+
+(c) How small would $p$ need to be (rounded to the nearest 0.01) for the probability of observing 30 or fewer heads to be greater than 0.05? *You could determine $p$ by trial and error, but there is also a quicker solution using `tibble()`.*
+
+[Let's make a table of $P(X \le 30)$ for the different choices of $p$.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+prob8c <- tibble(n = 100,
+                p = seq(0.01, 0.5, 0.01),
+                p30 = sum(dbinom(0:30, n, p))) %>% 
+  filter(p30 >= 0.05) %>% 
+  slice_max(p)
+
+prob8c
+```
+
+[The probability of heads $p$ would need to be 0.38 or smaller.]{.soln}
+
+
+
+
+
+
