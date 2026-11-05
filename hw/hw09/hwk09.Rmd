@@ -1,0 +1,141 @@
+---
+title: "Homework 9"
+author: "Student's Name Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw09` on your local computer.
+
+
+# Use of AI/Large Language Models Disclosure Statement
+
+If you made use of a large language model (ChatGPT, Claude, etc) to complete this homework, specify below:
+
+- **Which** problems were completed with the help of an LLM.
+- **How** the LLM was used to help complete the problems.
+
+You are always encouraged to attempt problems using only class resources first, and to consult an LLM only to check your answers or if you are stuck.  Additional homework help can be found in Miranda's office hours, the GLC, or the course Piazza.
+
+
+# Problem 1
+
+Consider drawing a sample of size $n_1 = 60$ from a binary population with proportion $p_1 = 0.3$ of 1's.  Also consider drawing a sample of size $n_2 = 55$ from a population with proportion $p_2 = 0.4$ of 1's.
+
+(a) Write code to generate 10000 simulations of the sampling distribution of $\hat{p}_1 - \hat{p}_2$, the difference in sample proportions.
+
+(b) Create a histogram of the results of the simulation, and report the mean and standard deviation of the 10000 resamples.
+
+(c) Now, describe the sampling distribution of $\hat{p}_1 - \hat{p}_2$ with the normal approximation.  Do the shape, mean and standard deviation of the resamples in (b) match the theoretical model?
+
+(d) Repeat parts (a) through (c), but set $n_1 = 5$ and $n_2 = 5$.  How do the shape, mean, and standard deviation of the simulation and theoretical model compare?
+
+
+# Problem 2
+
+(Fictional data): In a survey done in 2000, 63 out of 500 American households reported serving only vegetarian or vegan dishes for Thanksgiving.  In a similar survey done in 2024, the number of reported households serving only vegetarian or vegan dishes was 116 out of 500.
+
+Based on this data, a Z confidence interval for a difference in proportions (2000 - 2024) was reported as 
+
+$$(-0.1455, -0.0665)$$
+
+Identify the confidence level that was used to create this interval.
+
+
+# Problem 3 
+
+The "[returning soldier effect](https://en.wikipedia.org/wiki/Returning_soldier_effect)" is a phenemonon where more boys are born immediately following crises such as war.
+
+In the year 1940, before the US joined World War II, there were 1211684 male and 1148715 female live births in the US.  In the year 1946, after WWII ended, there were 1691220 male and 1597452 female live births in the US.
+
+(a) Use `geom_col()` to create a bar graph showing the proportion of boys born in 1940 versus 1946.  Add the layer `coord_cartesian(ylim = c(0, 1))` to force the y-axis to go from 0 to 1.
+
+(b) Re-create the plot in part (a) but set the y-axis to go from 0.51 to 0.52.
+
+(c) Before calculating a statistical result, do you think that this data is suggestive of a difference in the proportion of boys born between 1940 and 1946? Which plot do you think does a better job of illustrating the data in context?
+
+
+# Problem 4
+
+Build a 95% confidence interval on the difference in proportion of male births between 1940 and 1946 and interpret your results in context.
+
+
+# Problem 5
+
+Perform a hypothesis test to determine whether the proportion of male births in the US in 1946 is different from the proportion of male births in the US in 1940.  Write appropriate two-sided hypotheses and draw a conclusion with $\alpha = 0.05$.
+
+
+# Problem 6
+
+Consider the assumptions for the two-sample proportion Z test done in problems 4 and 5. For each of the following parts, identify whether the assumption described is **necessary** or **not necessary** for a two-sample proportion Z test to be valid.  Briefly explain each of your answers.
+
+(a) BINS assumptions are separately met for the births in 1940 and the births in 1946. 
+
+(b) BINS assumptions are met for the entire set of births in both 1940 and 1946.
+
+(c) The difference in population proportions $p_1 - p_2$ is approximately normal.
+
+(d) The difference in population proportions $p_1 - p_2$ is zero.
+
+(e) The difference in sample proportions $\hat{p}_1 - \hat{p}_2$ is approximately normal.
+
+
+# Problem 7
+
+Explain why an approximate Z test can be performed when doing proportion inference, but not a T test.  *(Think about the difference between the T and Z test in the context of mean inference - why does this not apply to a proportion?)*
+
+
+# Problem 8
+
+Continue working with the `mtcars` example from lecture.  Suppose that the rows in the `mtcars` data represent the miles per gallon a full population of the cars.
+
+```{r}
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(fill = "goldenrod2", color = "black", bins = 20)
+```
+
+The mpg has a population mean of $\mu = 20.09$ and a population standard deviation of $\sigma = 5.746$.
+
+```{r}
+mean(mtcars$mpg)
+
+size <- length(mtcars)
+sqrt( ((size-1)/size)*var(mtcars$mpg) )
+```
+
+(a) Use `replicate()` to draw 10000 samples of size $n = 10$ from `mtcars`.  For each one, calculate the quantity
+
+$$z \;=\; \frac{\bar{x} - \mu}{\sigma/\sqrt{n}}$$
+
+where $\bar{x}$ is the mean of the sample. Save these values in a dataframe or vector called `z_scores`.  You can use the function `new_data()` from lecture to help you.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+(b) Create a histogram of the 10000 simulated $z$ values from part (a). Verify visually that the result is similar to a $N(0, 1)$ standard normal curve.  You should see a bell curve centered at 0 with most of the histogram area between -3 and 3.
+
+(c) What is the 70th percentile of the simulated $z$ values?  Compare this to the exact 70th percentile of $N(0, 1)$.
+
+(d) Now, imagine if we had instead calculated 
+
+$$t \;=\; \frac{\bar{x} - \mu}{s/\sqrt{n}}$$
+
+where $s$ is the sample standard deviation.  How would the histogram of the simulated $t$ values compare to the histogram of simulated $z$ values in (b)?  How would the 70th percentile of the simulated $t$ values compare to the 70th percentile calculated in (c)?
+
+You should **not** need to actually perform this simulation - the answers to part (d) can be found by thinking through the concept of a T distribution.
+
+
+
