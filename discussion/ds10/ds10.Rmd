@@ -1,0 +1,60 @@
+---
+title: "Discussion 10"
+author: "Group Member Names Here"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds10`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to think about proportion inference and one-sample mean inference in more detail.  We'll also look at dissecting confidence intervals and hypothesis tests in different ways.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+We have seen how to perform a two-sample proportion test against a difference of zero. Now, consider a test where the null difference in proportions is not zero:
+$$H_0: p_1 - p_2 = 0.2 \quad\text{versus}\quad H_A: p_1 - p_2 \neq 0.2$$
+Show how this test would be performed if we have two groups of data with $\hat{p}_1 = 0.5$, $\hat{p}_2 = 0.35$, $n_1 = 80$, and $n_2 = 120$. Use $\alpha = 0.05$. *The test statistic is not the same as if we were testing $p_1 - p_2 = 0$!*
+
+
+# Problem 2
+#### (approx. 20 minutes)
+
+In statistics, we often have an idea of what a desirable or informative result looks like. We ask, "What qualities must our analysis have to acheive this result?" Perform these calculations for the three separate examples below.
+
+(a) Consider building a T confidence interval with $n = 35$ observations based on a sample with sample sd $s = 8.4$. What is the biggest confidence level (smallest $\alpha$) we can use if we want to have margin of error less than 3?
+
+(b) A 95% proportion Z confidence interval will be used to obtain an estimate for an unknown population proportion $p$. What is the smallest sample size that will guarantee a margin of error of at most 0.08?
+
+(c) We are performing a one-sided T hypothesis test of 
+$$H_0: \mu = 5 \quad \text{versus}\quad H_A: \mu > 5$$
+with $s = 43.1$ and $n = 150$. How large does the observed sample mean $\bar{x}$ need to be to see a one-sided p-value of 0.05?  *Start with the formula for a test statistic, then solve for $\bar{x}$.  What value goes on the other side of your equation?*
+
+(d) In the previous three parts, we worked with the significance level $\alpha$, the sample size $n$, and the sample mean $\bar{X}$. Which of these three quantities would it be most logical to manipulate, as a researcher? Explain your choice.
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+(a) A two-sided T hypothesis test with $n = 10$ data points yields a test statistic of $t_{obs} = 3.4$.  What is the two-sided p-value for this hypothesis test?
+
+(b) Repeat part (a), but suppose the same test statistic of 3.4 was computed with $n = 40$ data points.  What is the p-value?
+
+(c) Repeat (a) but calculate a p-value using a standard normal distribution.  How do the results compare to (a) and (b)?
+
+(d) Under what conditions is a T test for the mean similar to a Z test for the mean?  Explain how this is separate from the sample size threshold for using the CLT.
+
+
+
