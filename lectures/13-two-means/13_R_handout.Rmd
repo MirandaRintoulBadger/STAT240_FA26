@@ -1,0 +1,262 @@
+---
+title: "Section 13: Two-Sample Mean Inference"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Lizard data
+
+The dataset `lizards.tsv` lists the spike length of two samples of flat-tailed horned lizards: one group killed by shrikes, and the other still living lizards.
+
+```{r}
+lizards <- read_tsv("../../data/lizards.tsv")
+```
+
+Let's make side-by-side boxplots as well as separate histograms of each group.
+
+```{r}
+ggplot(lizards, aes(x = hornLength, y = survival)) +
+  geom_boxplot()
+```
+
+```{r}
+lizards %>%
+  filter(survival == "Alive") %>%
+  ggplot(aes(x = hornLength)) +
+  geom_histogram() +
+  labs(title = "Alive Spike Lengths")
+
+lizards %>%
+  filter(survival == "Dead") %>%
+  ggplot(aes(x = hornLength)) +
+  geom_histogram() +
+  labs(title = "Dead Spike Lengths")
+```
+
+The center of the "Dead" group is below that of the "Alive" group, although there is still a lot of overlap in the data.  Both groups are slightly skewed to the left.
+
+Let's also find some numeric summaries.
+
+```{r}
+lizard_summary <- lizards %>%
+  group_by(survival) %>%
+  summarize(xbar = mean(hornLength),
+            sd = sd(hornLength),
+            n = n())
+
+lizard_summary
+```
+
+## Two-sample T test
+
+Let's gather our data summaries.
+
+```{r}
+xbar1 <- lizard_summary$xbar[1]
+xbar2 <- lizard_summary$xbar[2]
+
+s1 <- lizard_summary$sd[1]
+s2 <- lizard_summary$sd[2]
+
+n1 <- lizard_summary$n[1]
+n2 <- lizard_summary$n[2]
+
+
+xbar1 - xbar2
+```
+
+Observed test statistic:
+
+```{r}
+se <- sqrt(s1^2/n1 + s2^2/n2)
+
+test_stat <- (xbar1 - xbar2 - 0) / se
+```
+
+Degrees of freedom calculation:
+
+```{r}
+w_numer <- (s1^2/n1 + s2^2/n2)^2
+w_denom <- (s1^4/(n1^2*(n1-1)) + s2^4/(n2^2*(n2-1)))
+
+w <- w_numer / w_denom
+```
+
+One-sided p-value calculation:
+
+```{r}
+pt(test_stat, df = w, lower.tail = F)
+```
+
+What if this was a two-sided p-value?  We would also need the area below -4.263.
+
+```{r}
+2*pt(test_stat, df = w, lower.tail = F)
+```
+
+`t.test()` confirms our results.  We can set `alternative = "greater"` to do a one-sided test.
+
+```{r}
+alive_lizards <- lizards %>% filter(survival == "Alive")
+dead_lizards <- lizards %>% filter(survival == "Dead")
+
+t.test(alive_lizards$hornLength, dead_lizards$hornLength,
+       conf.level = 0.99)
+
+t.test(alive_lizards$hornLength, dead_lizards$hornLength,
+       conf.level = 0.99, alternative = "greater")
+```
+
+EX 13.1:
+
+Replicate the (two-sided) Welch confidence interval of (0.839657 3.749347).  Identify the three components: point estimate, critical value, standard error.
+
+
+## Equal variances T test
+
+What if we assume that the two groups of lizards have the same population SD?  This is probably a reasonable assumption, since the sample SDs are similar.
+
+```{r}
+lizard_summary
+```
+
+
+```{r}
+s1 / s2
+```
+
+We calculate a pooled SD based on the two group SDs, and use this for our test statistic.
+
+```{r}
+s_p <- sqrt( (s1^2*(n1-1) + s2^2*(n2-1)) / (n1 + n2 - 2) )
+```
+
+```{r}
+test_stat <- (xbar1 - xbar2 - 0) / (s_p*sqrt(1/n1 + 1/n2))
+```
+
+The one-sided p-value is very small.
+
+```{r}
+pt(test_stat, df = n1 + n2 - 2, lower.tail = F)
+```
+
+```{r}
+alive_lizards <- lizards %>% filter(survival == "Alive")
+dead_lizards <- lizards %>% filter(survival == "Dead")
+
+# Equal variances T test, two-sided
+t.test(alive_lizards$hornLength, dead_lizards$hornLength,
+       conf.level = 0.99,
+       var.equal = T)
+
+# Equal variances T test, one-sided
+t.test(alive_lizards$hornLength, dead_lizards$hornLength,
+       conf.level = 0.99, alternative = "greater",
+       var.equal = T)
+```
+
+Here's an example of building the equal variances T CI "by hand".
+
+```{r}
+se <- (s_p*sqrt(1/n1 + 1/n2))
+cv <- qt(0.995, df = n1 + n2 - 2)
+
+c(xbar1 - xbar2 - cv*se, xbar1 - xbar2 + cv*se)
+```
+
+
+### Comparison to simulation
+
+What if we used a "big box" simulation approach?  Randomly a new mean spike length for each group.
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+```{r}
+new_alive_xbar <- mean(new_data(lizards, 154)$hornLength)
+new_dead_xbar <- mean(new_data(lizards, 30)$hornLength)
+
+new_alive_xbar - new_dead_xbar
+```
+
+Do this 10000 times to get a histogram of differences, and compare to our observed $\bar{x}_1 - \bar{x}_2 = 2.295$.
+
+```{r}
+mean_diffs <- tibble(
+  run = 1:10000,
+  alive = replicate(10000,
+                    mean(new_data(lizards, 154)$hornLength) ),
+  dead = replicate(10000,
+                    mean(new_data(lizards, 30)$hornLength) ),
+  diff = alive - dead
+)
+```
+
+```{r}
+ggplot(mean_diffs, aes(x = diff)) +
+  geom_histogram(fill = "dodgerblue", color = "black") +
+  geom_vline(xintercept = 2.295,
+             color = "forestgreen", linewidth = 1.5)
+```
+
+The one-sided p-value is very small.
+
+```{r}
+mean(mean_diffs$diff > 2.295)
+```
+
+
+## Paired T test
+
+Eight office workers are given standard work tasks one day, then varied work tasks another day.  We record the percentage of time their upper arm is below 30 degrees (higher number corresponds to better/healthier posture).
+
+```{r}
+standard <- c(81, 87, 86, 59, 66, 70, 73, 92)
+varied <- c(78, 91, 79, 65, 67, 72, 71, 96)
+```
+
+We can't do a two independent sample T test, since the groups aren't independent.  But we can take advantage of the paired structure and study the differences.  This reduces the problem to a basic one-sample T test.
+
+We need to assume independence and normality for the *differences*.
+
+```{r}
+diff <- standard - varied
+
+ggplot(mapping = aes(x = diff)) +
+  geom_histogram(bins = 5)
+```
+
+```{r}
+xbar <- mean(diff)
+s <- sd(diff)
+n <- length(diff)
+
+test_stat <- (xbar - 0) / (s/sqrt(n))
+```
+
+```{r}
+2*pt(test_stat, df = n-1)
+```
+
+We can also use `t.test()` to do a one-sample T test or a two-sample T test with `paired = T`.
+
+```{r}
+t.test(diff, conf.level = 0.95)
+
+t.test(standard, varied, conf.level = 0.95,
+       paired = T)
+```
+
+
