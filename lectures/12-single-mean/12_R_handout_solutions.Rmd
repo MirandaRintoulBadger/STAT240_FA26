@@ -1,0 +1,248 @@
+---
+title: "Section 11: One-Sample Mean Inference"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Penguin data
+
+Let's study the flipper length of Adelie penguins from the Palmer penguin data.
+
+```{r}
+penguins <- read_csv("../../data/penguins.csv")
+
+adelie <- penguins %>% filter(species == "Adelie")
+```
+
+
+```{r}
+ggplot(adelie, aes(x = flipper_length_mm)) +
+  geom_histogram()
+```
+
+
+
+The sample mean flipper length is $\bar{x} = 190.1$.
+
+```{r}
+adelie_summary <- adelie %>%
+  summarize(xbar = mean(flipper_length_mm),
+            s = sd(flipper_length_mm),
+            total = n())
+
+adelie_summary
+```
+
+How can we use this data to learn about the true mean flipper length, $\mu$?
+
+
+## T distribution
+
+What model should we use for sample mean inference?  According to the CLT, the sampling distribution of $\bar{X}$ is approximately normal, as long as we have a reasonably large sample size.  Let's return to the `mtcars` example where we looked at a population of miles per gallon of vehicles.
+
+```{r}
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(fill = "goldenrod2", color = "black", bins = 20)
+```
+
+```{r}
+new_data <- function(data, n) {
+  sample_n(data, size = n, replace = TRUE)
+}
+```
+
+The sample mean of 5 draws look somewhat normal, but still a bit asymmetric.
+
+```{r}
+average_mpg_5 <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(mtcars, 5)$mpg) ) 
+)
+
+ggplot(average_mpg_5, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+The sample mean of 20 draws looks normal.
+
+```{r}
+average_mpg_20 <- tibble(
+  run = 1:10000,
+  xbars = replicate(10000,
+                    mean(new_data(mtcars, 20)$mpg) ) 
+)
+
+ggplot(average_mpg_20, aes(x = xbars)) +
+  geom_histogram(fill = "dodgerblue", color = "black")
+```
+
+So, if we take a big enough sample (like $n = 20$ or so), we can use a normal model to study the sample mean. (Well.... almost.)
+
+We use the T distribution, which is wider than the standard normal, for mean inference when $\sigma$ is unknown and must be estimated with $s$.
+
+`pt()` finds a probability:
+
+```{r}
+pt(2, df = 8)
+```
+
+`qt()` finds a quantile:
+
+```{r}
+qt(0.975, df = 13)
+```
+
+
+EX 12.1
+
+Let $Z$ be a standard normal, $T_{5}$ be a T with 5 df, and $T_{10}$ be a T with 10 df.  Find $P(X < 0)$, $P(X < -1)$, and the 40th percentile for all three variables.
+
+```{r}
+pnorm(0)
+pt(0, df = 5)
+pt(0, df = 10)
+```
+
+```{r}
+pnorm(-1)
+pt(-1, df = 5)
+pt(-1, df = 10)
+```
+
+```{r}
+qnorm(0.4)
+qt(0.4, df = 5)
+qt(0.4, df = 10)
+```
+
+```{r}
+# 40th percentile of T curves with various df
+qt(0.4, df = 11:20) - qnorm(0.4)
+```
+
+
+
+## One-sample T test
+
+Let's test $H_0: \mu = 192$ at the 1% level with our penguin flipper data.
+
+```{r}
+adelie_summary
+```
+
+
+```{r}
+xbar <- adelie_summary$xbar
+s <- adelie_summary$s
+n <- adelie_summary$total
+
+test_stat <- (xbar - 192) / (s / sqrt(n))
+```
+
+Our two-sided p-value is very small, so we reject the null hypothesis.
+
+```{r}
+2*pt(test_stat, df = n - 1)
+```
+
+The R command t.test gives us a matching result.
+
+```{r}
+t.test(adelie$flipper_length_mm, mu = 192,
+       conf.level = 0.99)
+```
+
+What if we used a normal approximation?
+
+```{r}
+2*pnorm(test_stat)
+```
+
+
+## T CI
+
+When building a T CI, critical values come from specific quantiles of the T distribution.
+
+```{r}
+qt(0.005, df = n-1)
+qt(0.995, df = n-1)
+```
+
+
+Let's build a 99% T CI to go with our hypothesis test.
+
+```{r}
+se <- s / sqrt(n)
+cv <- qt(0.995, df = n-1)
+
+c(xbar - cv*se, xbar + cv*se)
+```
+
+This matches the `t.test()` output.
+
+```{r}
+t.test(adelie$flipper_length_mm, mu = 192,
+       conf.level = 0.99)
+```
+
+What if we built it with a Z critical value?  The interval would be slightly narrower.
+
+```{r}
+z_cv <- qnorm(0.995)
+
+c(xbar - z_cv*se, xbar + z_cv*se)
+```
+
+
+EX 12.2
+
+The vector called `bearings` contains 15 measurements (in grams) of ball bearings manufactured at a facility.  The factory should be calibrated to a mass of $\mu = 12$ grams.
+
+```{r}
+bearings <- c(11.77, 11.83, 11.88, 12.00, 11.95, 11.96, 11.77, 11.91,
+              11.80, 12.09, 12.20, 11.85, 11.86, 12.18, 11.99)
+```
+
+Complete a T hypothesis test at the 2% level for this data and build a 98% T confidence interval.  You can check your work with the `t.test()` code below.
+
+```{r}
+ggplot(mapping = aes(x = bearings)) +
+  geom_histogram(bins = 10)
+```
+
+```{r}
+xbar <- mean(bearings)
+s <- sd(bearings)
+n <- length(bearings)
+
+test_stat <- (xbar - 12) / (s / sqrt(n))
+```
+
+```{r}
+2*pt(test_stat, df = n-1)
+```
+
+```{r}
+cv <- qt(0.99, df = n-1)
+se <- s / sqrt(n)
+
+c(xbar - cv*se, xbar + cv*se)
+```
+
+
+
+```{r}
+t.test(bearings, mu = 12, conf.level = 0.98)
+```
+
+
+
