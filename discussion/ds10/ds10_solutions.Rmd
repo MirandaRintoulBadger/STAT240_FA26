@@ -1,0 +1,160 @@
+---
+title: "Discussion 10"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds10`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to think about proportion inference and one-sample mean inference in more detail.  We'll also look at dissecting confidence intervals and hypothesis tests in different ways.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+We have seen how to perform a two-sample proportion test against a difference of zero. Now, consider a test where the null difference in proportions is not zero:
+$$H_0: p_1 - p_2 = 0.2 \quad\text{versus}\quad H_A: p_1 - p_2 \neq 0.2$$
+Show how this test would be performed if we have two groups of data with $\hat{p}_1 = 0.5$, $\hat{p}_2 = 0.35$, $n_1 = 80$, and $n_2 = 120$. Use $\alpha = 0.05$. *The test statistic is not the same as if we were testing $p_1 - p_2 = 0$!*
+
+[When testing for a difference of 0, we start by assuming that $p_1 = p_2 = p$. $p$ is the common proportion, estimated with $\hat{p}$. However, our null hypothesis of a difference of 0.2 does not make that assumption, so we would want to use the more general form of standard error. The standard error of the difference in proportions is 
+$$se(\hat{p}_1 - \hat{p}_2) \;=\; \sqrt{\frac{p_1(1-p_1)}{n_1} + \frac{p_2(1-p_2)}{n_2}}.$$
+Since we cannot simplify this expression anymore, we use the more general standard error (estimated from our data) in the denominator of our test statistic.  Our test statistic is
+$$z_{obs} \;=\; \frac{\hat{p}_1 - \hat{p}_2 - 0.2}{\sqrt{\frac{\hat{p}_1(1-\hat{p}_1)}{n_1} + \frac{\hat{p}_2(1-\hat{p}_2)}{n_2}}} \;=\; \frac{0.5 - 0.35 - 0.2}{\sqrt{\frac{0.5(1-0.5)}{80} + \frac{0.35(1-0.35)}{120}}} \;=\; -0.706.$$]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+phat1 <- 0.5; phat2 <- 0.35
+n1 <- 80; n2 <- 120
+
+se <- sqrt(phat1*(1-phat1)/n1 + phat2*(1-phat2)/n2)
+
+test_stat <- (phat1 - phat2 - 0.2)/se
+test_stat
+```
+
+[The p-value is $2\times P(Z \le -0.706) = 0.48$. This is much larger than our significance level of 0.05, so we would fail to reject the null.  We do not have evidence that the true difference in proportions is not 0.2.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+2*pnorm(test_stat)
+```
+
+
+# Problem 2
+#### (approx. 20 minutes)
+
+In statistics, we often have an idea of what a desirable or informative result looks like. We ask, "What qualities must our analysis have to acheive this result?" Perform these calculations for the three separate examples below.
+
+(a) Consider building a T confidence interval with $n = 35$ observations based on a sample with sample sd $s = 8.4$. What is the biggest confidence level (smallest $\alpha$) we can use if we want to have margin of error less than 3?
+
+[The margin of error is given by the critical value $t_{35, \alpha/2}$ multiplied by the standard error $\frac{s}{\sqrt{n}}$.  We have
+$$MoE \;=\; 3 \;=\; t\cdot \frac{8.4}{35} \quad \Rightarrow \quad t \;=\; 2.113$$
+So, 2.113 is the quantile that cuts off $\alpha/2$ area in the upper tail of the T curve. To find $\alpha/2$, use `pt()`.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pt(2.113, df = 34, lower.tail = F)
+```
+
+[We get $\alpha/2 = 0.02$ which means $\alpha = 0.04$. This corresponds to 96% confidence.  We need a CI with level 96% or lower to get our desired margin of error.]{.soln}
+
+(b) A 95% proportion Z confidence interval will be used to obtain an estimate for an unknown population proportion $p$. What is the smallest sample size that will guarantee a margin of error of at most 0.08?
+
+[The margin of error for a 95% proportion Z CI is given by
+$$1.96\sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$
+where 1.96 is the 97.5 percentile of the standard normal.  We set this equal to 0.08 and solve for $n$. The last value we need is $\hat{p}$. We want to guarantee that our margin of error will be 0.08 or less, for any $\hat{p}$. We have to pick the "worst" $\hat{p}$ that corresponds to the largest possible standard error, to make sure our $n$ will always work. The standard error is largest when $\hat{p} = 0.5$.  So,
+$$0.08 = 1.96\cdot \sqrt{\frac{0.5(0.5)}{n}} \quad \Rightarrow \quad n = \Big(\frac{1.96}{0.08}\Big)^2 \cdot 0.25 = 150.06$$]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+n <- (1.96/0.08)^2 * 0.25
+n
+```
+
+[We can then round this up to be $n = 151$. Because this value of $n$ gives us a small enough margin of error for the worst-case $\hat{p}$, the margin of error will also be smaller than 0.08 for any other value of $\hat{p}$.]{.soln}
+
+(c) We are performing a one-sided T hypothesis test of 
+$$H_0: \mu = 5 \quad \text{versus}\quad H_A: \mu > 5$$
+with $s = 43.1$ and $n = 150$. How large does the observed sample mean $\bar{x}$ need to be to see a one-sided p-value of 0.05?  *Start with the formula for a test statistic, then solve for $\bar{x}$.  What value goes on the other side of your equation?*
+
+[For $n = 150$, the p-value of 0.05 is calculated on a $t_{149}$ distribution. The test statistic must correspond to the 95th percentile of $t_149$ for the p-value (area above) to be 0.05.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+test_stat <- qt(0.95, df = 149)
+test_stat
+```
+
+[So, a test statistic of 1.655 or greater results in us rejecting the null hypothesis. Now, we can use the test statistic formula with 5, $s$, and $n$ and solve for $\bar{x}$. 
+$$1.655 = \frac{\bar{x} - 5}{43.1/\sqrt{150}} \quad \Rightarrow \quad \bar{x} = 1.655\cdot \frac{43.1}{\sqrt{150}} + 5 = 10.825$$]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+xbar <- test_stat * (43.1/sqrt(150)) + 5
+xbar
+```
+
+[To get a p-value greater than 0.05, we would need to observe a sample mean $\bar{x}$ of at least 10.825, or 5.825 higher than the
+null value of 5.]{.soln}
+
+(d) In the previous three parts, we worked with the significance level $\alpha$, the sample size $n$, and the sample mean $\bar{X}$. Which of these three quantities would it be most logical to manipulate, as a researcher? Explain your choice.
+
+[It would make the most sense to adjust the sample size $n$.  We can improve our estimates and our hypothesis tests by taking a larger sample of data.  It does not make sense to manipulate $\bar{X}$, since that value comes from observing data.]{.soln}
+
+[Even though we can control $\alpha$, it's also not a good idea to change this quantity to get a better result.  Best practice is to set $\alpha$ ahead of time according to how much risk we are comfortable with.]{.soln}
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+(a) A two-sided T hypothesis test with $n = 10$ data points yields a test statistic of $t_{obs} = 3.4$.  What is the two-sided p-value for this hypothesis test?
+
+[The two-sided p-value is the area above 3.4 and the area below -3.4 on the T curve with 9 degrees of freedom.  We can take one of these areas and multiply it by 2, by symmetry.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+2*pt(3.4, df = 9, lower.tail = F)
+```
+
+[The p-value is 0.0079.]{.soln}
+
+(b) Repeat part (a), but suppose the same test statistic of 3.4 was computed with $n = 40$ data points.  What is the p-value?
+
+[The p-value calculation is the same, except now the degrees of freedom is 39 instead of 9.  We get a p-value of 0.0016.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+2*pt(3.4, df = 39, lower.tail = F)
+```
+
+(c) Repeat (a) but calculate a p-value using a standard normal distribution.  How do the results compare to (a) and (b)?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+2*pnorm(3.4, lower.tail = F)
+```
+
+[The p-value on the standard normal curve is 0.0007, which is smaller than the two p-values found from the T distributions.  It is more similar to the T with 39 df than the T with only 9 df.]{.soln}
+
+(d) Under what conditions is a T test for the mean similar to a Z test for the mean?  Explain how this is separate from the sample size threshold for using the CLT.
+
+[A T null distribution is wider than a standard normal Z curve, to account for the extra error from estimating $\sigma$ with $S$.  So, if $\sigma$ is known, a Z test should be used, although this never really happens in practice.]{.soln}
+
+[When $n$ is large, $S$ is a better estimate for $\sigma$, and so a T test will yield very similar results to a Z test.  This corresponds to the fact that a T curve will converge to a standard normal as the degrees of freedom increases.]{.soln}
+
+[This is separate from the sample size requirement to use the CLT.  The CLT must kick in for a Z test OR a T test to be valid for mean inference. ]{.soln}
+
+
+
