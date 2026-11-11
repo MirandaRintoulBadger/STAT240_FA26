@@ -1,0 +1,69 @@
+---
+title: "Discussion 11"
+author: "Student's Name Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds11`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to become more comfortable with using the T distribution for one- and two-sample mean inference.  You'll also get some practice with identifying paired vs. independent data.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+Using a sample of $n = 48$ points, a 98% T confidence interval for $\mu$ is reported as $(490.2, 584.6)$.
+
+(a) Identify the point estimate and margin of error of this interval.
+
+(b) Re-create the 98% interval, but use a Z critical value from N(0, 1) instead of a T critical value.  How does this interval compare to $(490.2, 584.6)$?
+
+(c) What assumptions/approximations are we making when we use a standard normal distribution to make inference on $\mu$?  Under what conditions would a Z confidence interval for $\mu$ be exact?
+
+
+# Problem 2
+#### (approx. 20 minutes)
+
+Consider exploring the formula for Welch degrees of freedom for a two-sample T test.
+
+(a) Create a dataframe with the following columns: 
+
+- `s1`, with values 1 through 40, repeated 40 times.
+- `s2`, with values 1 through 40, repeated 40 times, so that we have 1600 unique combinations of `s1` and `s2`.
+- `w_df`, the Welch degrees of freedom evaluated for each combination of `s1` and `s2`.  Use n1 = n2 = 20 and `round()` to 3 decimal points to avoid precision errors with R.
+
+    Think about how to use the `rep()` function cleverly to get every different combination of `s1` and `s2` without any repeat rows.
+
+(b) What are the minimum and maximum values of `w_df` in your the data?  What are the corresponding values of `s1` and `s2`?
+
+(c) Use ggplot with `geom_tile()` to create a heat-map plot of your dataframe with `s1` and `s2` on the x and y axes and the tiles colored by `w_df` in a color scheme of your choice. 
+
+(d) Based on the results of (b) and (c), interpret the relationship between the size of `s1` and `s2` and the Welch degrees of freedom.
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Identify whether each of the datasets described below are paired or independent samples.  Briefly explain your choices.
+
+(a) Measurements of annual income taken both before and after a two-year training course for a random sample of 100 people who took the course.
+
+(b) Measurements of annual income for a random sample of 100 people who took the two-year training course and another random sample of 100 people who did not take the course.
+
+(c) Measurements of annual income for both individuals in pairs formed by assigning 100 people to pairs at random.
+
+(d) Measurements of annual income 100 randomly selected pairs of twins that have one female and one male twin.
+
+(e) Measurements of annual income recorded for both partners of 100 randomly selected couples.
+
