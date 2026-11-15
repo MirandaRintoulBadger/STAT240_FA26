@@ -1,1 +1,1 @@
-Chapter 15 (Slope inference)
+Chapter 15 (Linear regression slope inference)
