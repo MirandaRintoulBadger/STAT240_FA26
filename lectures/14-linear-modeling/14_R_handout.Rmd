@@ -1,0 +1,263 @@
+---
+title: "Section 14: Linear Modeling"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+
+# Set all plots in this section to have "minima" theme - looks cleaner
+theme_set(theme_minimal())
+```
+
+## Correlation
+
+A scatterplot shows a downward trend between year and freeze duration in the Lake Monona data.
+
+```{r}
+monona <- read_csv("../../data/lake-monona-winters-2025.csv")
+
+ggplot(monona, aes(x = year1, y = duration)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+We can calculate correlation with the `cor` function or "by-hand".
+
+```{r}
+cor(monona$year1, monona$duration)
+cor(monona$duration, monona$year1)
+```
+
+```{r}
+xbar <- mean(monona$year1)
+s_x <- sd(monona$year1)
+
+ybar <- mean(monona$duration)
+s_y <- sd(monona$duration)
+
+n <- nrow(monona)
+
+sum((monona$year1 - xbar) * (monona$duration - ybar)) / ((n-1)*s_x*s_y)
+```
+
+
+## Linear modeling
+
+Let's calculate a linear model for the Lake Monona data, and compare to the `lm()` function in R.
+
+```{r}
+corr <- cor(monona$year1, monona$duration)
+  
+est_slope <- corr * (s_y / s_x)
+
+est_intercept <- ybar - est_slope*xbar
+
+est_intercept; est_slope
+```
+
+In R, use the syntax `y ~ x` when fitting a model.
+
+```{r}
+lake_mod <- lm(duration ~ year1, data = monona)
+
+lake_mod
+```
+
+
+EX 14.1
+
+The dataset `lions.csv` records the age and nose color (what % is black) for 32 individual lions.
+
+```{r}
+lions <- read_csv("../../data/lions.csv") %>%
+  rename(black = proportion.black)
+```
+
+Create a scatterplot of the data, where x = age and y = black.  Does a linear model seem reasonable for this data?
+
+Calculate the least-squares slope and intercept and then check your work with the `lm()` function.
+
+
+```{r}
+
+```
+
+
+We can also get more information about a linear model by using the `summary()` command.
+
+```{r}
+summary(lake_mod)
+```
+
+
+## Model validation
+
+We evaluate the assumptions (i.e., validate the linear model fit) by studying the residuals.  For ease of graphing, we can add the residuals to our data.
+
+```{r}
+resid(lake_mod)
+predict(lake_mod)
+
+monona_resids <- monona %>% 
+  mutate(residuals = resid(lake_mod),
+         pred_duration = predict(lake_mod)) %>% 
+  select(year1, duration, pred_duration, residuals)
+  
+monona_resids
+
+monona_resids %>%
+  ggplot(aes(x = year1, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0)
+```
+
+
+Let's do the same for the lion data.
+
+```{r}
+lion_mod <- lm(black ~ age, data = lions)
+
+lions %>%
+  mutate(residuals = resid(lion_mod)) %>%
+  ggplot(aes(x = age, y = residuals)) +
+  geom_point() + geom_hline(yintercept = 0)
+```
+
+
+## Prediction
+
+Linear models are commonly used for prediction.  For example, we predicted the nose color of a 5-year-old lion to be about 36% black.  
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 5))
+```
+
+
+EX 14.2
+
+Using `lion_mod` and `lake_mod`, predict the nose color for a 15 year old lion and the freeze duration for a future winter.
+
+```{r}
+
+```
+
+
+# Prediction intervals
+
+We can use `predict` to provide either a point estimate or an interval estimate.  A confidence interval gives the average nose color for all 5 year old lions, i.e. the height of the line.  The default behavior is to build a 95% CI.
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 5))
+
+predict(lion_mod, newdata = tibble(age = 5), interval = "confidence")
+```
+
+How certain are we that the line was drawn in the right place, based on our data? Let's make a bunch of CIs.
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 1:10))
+
+lion_CIs <- predict(lion_mod, newdata = tibble(age = 1:13),
+               interval = "confidence")
+
+lion_CIs
+```
+
+This is what the gray ribbon in `geom_smooth()` is doing!
+
+```{r}
+ggplot(lions, aes(age, black)) +
+  geom_point() +
+  geom_line(data = as_tibble(lion_CIs),
+            mapping = aes(x = 1:13, y = lwr), color = "forestgreen") +
+  geom_line(data = as_tibble(lion_CIs),
+            mapping = aes(x = 1:13, y = upr), color = "forestgreen") +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Lion Ages vs. % nose black",
+    subtitle = "With Confidence Regression Interval in Green"
+  )  +
+  theme(plot.title = element_text(size = 20),
+        plot.subtitle = element_text(size = 15))
+```
+
+
+The estimated nose color for a single 5 year old lion is given by a prediction interval.  This is wider than a CI.
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 5), interval = "confidence")
+predict(lion_mod, newdata = tibble(age = 5), interval = "prediction")
+```
+
+
+In a scatterplot, the lines formed by the PIs contain approximately 95% of the points.
+
+```{r}
+lion_PIs <- predict(lion_mod, newdata = tibble(age = 1:13),
+               interval = "prediction")
+
+ggplot(lions, aes(age, black)) +
+  geom_point() +
+  geom_line(data = as_tibble(lion_PIs), mapping = aes(x = 1:13, y = lwr)) +
+  geom_line(data = as_tibble(lion_PIs), mapping = aes(x = 1:13, y = upr)) +
+  labs(
+    title = "Lion Ages vs. % nose black",
+    subtitle = "With Prediction Intervals"
+  ) +
+  theme(plot.title = element_text(size = 20),
+        plot.subtitle = element_text(size = 15))
+```
+
+
+We can build these intervals by hand using the "Residual standard error", $s$, extracted from the summary output with `sigma`.
+
+```{r}
+summary(lion_mod)
+
+summary(lion_mod)$sigma
+
+n <- nrow(lions)
+```
+
+The null distribution is a T with $n-2$ degrees of freedom.
+
+```{r}
+pt_est <- predict(lion_mod, newdata = tibble(age = 5))
+
+s <- summary(lion_mod)$sigma
+se <- s*sqrt( 1/n + (5 - mean(lions$age))^2 / ((n-1)*var(lions$age)) )
+
+cv <- qt(0.975, df = n-2)
+
+c(pt_est - cv*se, pt_est + cv*se)
+```
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 5), interval = "confidence")
+```
+
+
+We can also recreate the prediction interval by hand by adding a +1 term in the square root in the SE calculation.
+
+```{r}
+pt_est <- predict(lion_mod, newdata = tibble(age = 5))
+
+s <- summary(lion_mod)$sigma
+se <- s*sqrt(1 + 1/n + (5 - mean(lions$age))^2 / ((n-1)*var(lions$age)) )
+
+cv <- qt(0.975, df = n-2)
+
+c(pt_est - cv*se, pt_est + cv*se)
+```
+
+```{r}
+predict(lion_mod, newdata = tibble(age = 5), interval = "prediction")
+```
+
+
