@@ -1,0 +1,160 @@
+---
+title: "Discussion 11"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = FALSE,
+                      error = TRUE)
+
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+# Preliminaries
+
+- This file should be in `STAT240/discussion/ds11`.
+- This assignment should be completed in your discussion groups, which can be found on the "People" tab on Canvas.
+
+The goal of today's discussion will be to become more comfortable with using the T distribution for one- and two-sample mean inference.  You'll also get some practice with identifying paired vs. independent data.
+
+
+# Problem 1
+#### (approx. 15 minutes)
+
+Using a sample of $n = 48$ points, a 98% T confidence interval for $\mu$ is reported as $(490.2, 584.6)$.
+
+(a) Identify the point estimate and margin of error of this interval.
+
+[The point estimate is the midpoint of the interval, $\frac{490.2 + 584.6}{2}$.  The margin of error is the half-width of the interval, $\frac{584.6 - 490.2}{2}$.]{.soln}
+
+```{r, class.source="soln", class.output="soln"}
+pt_est <- (490.2 + 584.6) / 2
+moe <- (584.6 - 490.2) / 2
+
+pt_est; moe
+
+# This recreates the original interval
+c(pt_est - moe, pt_est + moe)
+```
+
+(b) Re-create the 98% interval, but use a Z critical value from N(0, 1) instead of a T critical value.  How does this interval compare to $(490.2, 584.6)$?
+
+[The margin of error 47.2 above was calculated as standard error times the T critical value.  Let's first solve for the original standard error.]{.soln}
+
+```{r, class.source="soln", class.output="soln"}
+se <- moe / qt(0.99, df = 47)
+se
+```
+
+[To get the margin of error for a Z confidence interval, we need to multiply this standard error by the same critical value taken from $N(0, 1)$ instead of the T distribution.]{.soln}
+
+```{r, class.source="soln", class.output="soln"}
+moe_z <- se * qnorm(0.99)
+
+c(pt_est - moe_z, pt_est + moe_z)
+```
+
+[The Z confidence interval is (491.8, 583) which is slightly narrower than the original T confidence interval.]{.soln}
+
+(c) What assumptions/approximations are we making when we use a standard normal distribution to make inference on $\mu$?  Under what conditions would a Z confidence interval for $\mu$ be exact?
+
+[The extra width of the T confidence interval, which corresponds to the extra spread on a T curve compared with the Z curve, comes from the error in using $s$ (sample standard deviation) to estimate $\sigma$ (population standard deviation).  When we build and report a Z CI, we are assuming that this error is negligible, i.e. $s$ is a very good estimate for $\sigma$.  This is the case when $n$ is large.]{.soln}
+
+[The Z confidence interval for $\mu$ is only exact when $\sigma$, the population sd is known.]{.soln}
+
+
+# Problem 2
+#### (approx. 20 minutes)
+
+Consider exploring the formula for Welch degrees of freedom for a two-sample T test.
+
+(a) Create a dataframe with the following columns: 
+
+- `s1`, with values 1 through 40, repeated 40 times.
+- `s2`, with values 1 through 40, repeated 40 times, so that we have 1600 unique combinations of `s1` and `s2`.
+- `w_df`, the Welch degrees of freedom evaluated for each combination of `s1` and `s2`.  Use n1 = n2 = 20 and `round()` to 3 decimal points to avoid precision errors with R.
+
+    Think about how to use the `rep()` function cleverly to get every different combination of `s1` and `s2` without any repeat rows.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+welch_df_data <- tibble(
+  s1 = rep(1:40, 40),
+  s2 = rep(1:40, each = 40),
+  
+  w_numerator = (s1^2/20 + s2^2/20)^2,
+  w_denominator = (s1^4/(20^2*(20-1)) + s2^4/(20^2*(20-1))),
+  
+  w_df = round(w_numerator / w_denominator, 3)
+)
+```
+
+(b) What are the minimum and maximum values of `w_df` in your the data?  What are the corresponding values of `s1` and `s2`?
+
+```{r, class.source="rsoln", class.output="rsoln"}
+welch_df_data %>%
+  slice_min(w_df)
+
+welch_df_data %>%
+  slice_max(w_df)
+```
+
+[The smallest value of df, about 19, occurs at the biggest difference between `s1` and `s2`.  The maximum value of the df, which is n1 + n2 - 2 = 38, occurs in every instance where s1 and s2 are equal.]{.soln}
+
+(c) Use ggplot with `geom_tile()` to create a heat-map plot of your dataframe with `s1` and `s2` on the x and y axes and the tiles colored by `w_df` in a color scheme of your choice. 
+
+```{r, class.source="rsoln", class.output="rsoln"}
+ggplot(welch_df_data, aes(x = s1, y = s2, fill = w_df)) +
+  geom_tile() +
+  scale_fill_viridis_c()
+```
+
+(d) Based on the results of (b) and (c), interpret the relationship between the size of `s1` and `s2` and the Welch degrees of freedom.
+
+[There is a bigger "penalty" to the Welch df when the two sample standard deviations are more different.  We see that the Welch df are always the same when the two sample SDs are equal, regardless of the size of the SD. (In a T test that assumes equal population variances, the degrees of freedom are simply n1 + n2 - 2).]{.soln}
+
+[In the plot, we see that the bigger values for df "fan out" as we move to the top right.  So, the amount that the degrees of freedom are penalized depends on the magnitude of s1 and s2 - we seem to care more about the relative difference between the values rather than just the absolute difference.]{.soln}
+
+
+# Problem 3
+#### (approx. 10 minutes)
+
+Identify whether each of the datasets described below are paired or independent samples.  Briefly explain your choices.
+
+(a) Measurements of annual income taken both before and after a two-year training course for a random sample of 100 people who took the course.
+
+[Paired - the samples are not independent because we are measuring the same person's income before and after the course.  The analysis should be done at the level of each person.]{.soln}
+
+(b) Measurements of annual income for a random sample of 100 people who took the two-year training course and another random sample of 100 people who did not take the course.
+
+[Independent - in this case we are studying completely different people in the group who took the course and the group who did not, so there is no meaningful way to pair the data.]{.soln}
+
+(c) Measurements of annual income for both individuals in pairs formed by assigning 100 people to pairs at random.
+
+[Independent - just like part (b), there is no special meaning to this pairing that we expect to affect our analysis, so we should consider the two groups as independent.]{.soln}
+
+(d) Measurements of annual income 100 randomly selected pairs of twins that have one female and one male twin.
+
+[Paired - we cannot assume that siblings are independent of each other since they probably share a lot of background and upbringing that might affect their financial situation. We should do our analysis on the level of each pair of twins.]{.soln}
+
+(e) Measurements of annual income recorded for both partners of 100 randomly selected couples.
+
+[Paired - the groups are not independent because the individuals have chosen to enter a relationship with an individual from the other group. We should do the analysis on the level of each couple since the partners might have a similar job or share financial habits.]{.soln}
+
+
