@@ -302,12 +302,12 @@ old <- theme_get()
 theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
 ```
 
-The mpg has a population mean of $\mu = 20.09$ and a population standard deviation of $\sigma = 5.746$.
+The mpg has a population mean of $\mu = 20.09$ and a population standard deviation of $\sigma = 5.932$.
 
 ```{r}
 mean(mtcars$mpg)
 
-size <- length(mtcars)
+size <- nrow(mtcars)
 sqrt( ((size-1)/size)*var(mtcars$mpg) )
 ```
 
@@ -326,7 +326,7 @@ new_data <- function(data, n) {
 ```{r, class.source="rsoln", class.output="rsoln"}
 z_scores <- tibble(
   xbar = replicate(10000, mean(new_data(mtcars, 10)$mpg)),
-  z = (xbar - 20.09) / (5.746/sqrt(10))
+  z = (xbar - 20.09) / (5.932/sqrt(10))
 )
 ```
 

@@ -104,12 +104,12 @@ ggplot(mtcars, aes(x = mpg)) +
   geom_histogram(fill = "goldenrod2", color = "black", bins = 20)
 ```
 
-The mpg has a population mean of $\mu = 20.09$ and a population standard deviation of $\sigma = 5.746$.
+The mpg has a population mean of $\mu = 20.09$ and a population standard deviation of $\sigma = 5.932$.
 
 ```{r}
 mean(mtcars$mpg)
 
-size <- length(mtcars)
+size <- nrow(mtcars)
 sqrt( ((size-1)/size)*var(mtcars$mpg) )
 ```
 
