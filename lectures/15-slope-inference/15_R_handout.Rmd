@@ -1,0 +1,212 @@
+---
+title: "Section 15: Slope Inference"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+
+# Set all plots in this section to have "minima" theme - looks cleaner
+theme_set(theme_minimal())
+```
+
+## Slope standard error
+
+Let's do inference on the slope of the Lake Monona freeze duration linear model.  Our parameter of interest is $\beta_1$ (the true slope) and the point estimate is the estimated slope from the linear model.
+
+```{r}
+monona <- read_csv("../../data/lake-monona-winters-2025.csv")
+
+lake_mod <- lm(duration ~ year1, data = monona)
+
+lake_mod
+```
+
+The estimated line is random: it depends on a random sample from a population of interest.  Let's simulate a fake population where the true $\beta_5 = 1$, $beta_1 = 10$, and $\sigma = 20$.  We'll draw 50 points from this population.
+
+```{r}
+simulated_data <- tibble(
+    x = runif(50, 0, 10),
+    y = 5 + 10 * x + rnorm(50, mean = 0, sd = 20)
+  )
+
+
+ggplot(simulated_data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_abline(intercept = 5, slope = 10,
+              linewidth = 1.5, alpha = 0.5) +
+  labs(title = "True Intercept = 5, True Slope = 10")
+
+```
+
+Next, we'll calculate a regression line and plot that against the data and the true linear relationship.
+
+```{r}
+simulated_mod <- lm(y ~ x, data = simulated_data)
+
+ggplot(simulated_data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_abline(intercept = 5, slope = 10,
+              linewidth = 1.5, alpha = 0.5) +
+  geom_smooth(method = "lm", se = F) +
+  labs(title = "True Intercept = 5, True Slope = 10",
+       subtitle = paste("Est. Intercept = ", simulated_mod$coef[1],
+                        ", Est. Slope = ", simulated_mod$coef[2]))
+```
+
+Each time we draw a new set of data, we get a slightly different estimated linear model.
+
+```{r}
+simulated_data <- tibble(
+    x = runif(50, 0, 10),
+    y = 5 + 10 * x + rnorm(50, mean = 0, sd = 20)
+  )
+simulated_mod <- lm(y ~ x, data = simulated_data)
+
+ggplot(simulated_data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_abline(intercept = 5, slope = 10,
+              linewidth = 1.5, alpha = 0.5) +
+  geom_smooth(method = "lm", se = F) +
+  labs(title = "True Intercept = 5, True Slope = 10",
+       subtitle = paste("Est. Intercept = ", simulated_mod$coef[1],
+                        ", Est. Slope = ", simulated_mod$coef[2]))
+```
+
+For an observed set of data, we can see the slope standard error in the coefficients section of the `summary()` output.  We can also verify this by hand.
+
+```{r}
+summary(lake_mod) 
+
+# Verify standard error "by hand"
+s <- summary(lake_mod)$sigma
+n <- nrow(monona)
+
+s / sqrt((n-1)*var(monona$year1))
+```
+
+
+## Slope hypothesis test
+
+Let's perform a T-test "by hand" for whether the slope in the Lake Monona model is zero or nonzero.
+
+```{r}
+beta1_hat <- summary(lake_mod)$coefficients[2, 1]
+
+# Two ways of getting SE: with the formula, or from the summary output
+se <- s / sqrt((n-1)*var(monona$year1))
+se <- summary(lake_mod)$coefficients[2, 2]
+
+test_stat <- (beta1_hat - 0) / se
+```
+
+Our p-value is the area below -8.5 (and above 8.5) on the T distribution with $n-2 = 168$ degrees of freedom.
+
+```{r}
+2*pt(test_stat, df = n-2)
+```
+
+
+EX 15.1:
+
+Where can we find the results of this hypothesis test in the `summary()` output?  How would the p-value calculation change if we had a one-sided hypothesis?
+
+
+
+We can also build a corresponding confidence interval for the slope.  For 99% confidence:
+
+```{r}
+cv <- qt(0.995, df = n-2)
+
+c(beta1_hat - cv*se, beta1_hat + cv*se)
+```
+
+
+## Simulated correlation test
+
+Under the null hypothesis, year and duration are related, and thus the (x, y) pairs are arbitrary.  We can simulate this by randomly permuting y (or x).
+
+```{r}
+sample(monona$duration)
+```
+
+```{r}
+monona %>%
+  ggplot(aes(x = year1, y = sample(duration))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+Repeat this process 10000 times to get 10000 sample correlations where year and duration are unrelated.
+
+```{r}
+resampled_cors <- tibble(
+  run = 1:10000,
+  corr = replicate(10000, cor(monona$year1, sample(monona$duration)))
+)
+```
+
+How does this compare to our observed correlation?
+
+```{r}
+obs_r <- cor(monona$year1, monona$duration)
+
+ggplot(resampled_cors, aes(x = corr)) +
+  geom_histogram(fill = "gray90", color = "black") +
+  geom_vline(xintercept = obs_r,
+             linewidth = 1.5, color = "forestgreen")
+```
+
+The two-sided simulation p-value is zero.
+
+```{r}
+mean(resampled_cors$corr <= obs_r) +
+  mean(resampled_cors$corr >= abs(obs_r))
+```
+
+
+EX 15.2:
+
+Perform a simulation-based test of the correlation between students' exam scores in physics and math.  Start by graphing your data, then state hypotheses, observed correlation, and p-value. 
+
+How does the result change if we reverse the definition of x and y?
+
+```{r}
+exam_scores <- tibble(
+  physics = c(71, 46, 85, 94, 35, 20, 86, 18, 54, 13, 56),
+  math = c(62, 37, 62, 90, 45, 15, 90, 25, 87, 7, 63)
+)
+```
+
+
+## Other correlation measures
+
+There are also other measures of correlation we can use.  For example, Spearman's rank-based correlation tests for a *positive* relationship, rather than specifically a *positive linear* relationship.
+
+```{r}
+# Pearson's "classical" correlation
+cor(exam_scores$physics, exam_scores$math)
+
+# Spearman's rank-based correlation
+cor(exam_scores$physics, exam_scores$math, method = "spearman")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
