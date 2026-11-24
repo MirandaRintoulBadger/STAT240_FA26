@@ -1,0 +1,130 @@
+---
+title: "Homework 11"
+author: "Student's Name Here"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw11` on your local computer.
+- Download `happiness_2019.csv` to `STAT240/data`.
+
+
+# Problem 1
+
+The [Happiness index](https://www.kaggle.com/datasets/sougatapramanick/happiness-index-2018-2019) data contains information on the happiness index of different countries from 2018-2019.  We will focus on the happiness index (`Score`) and GDP per capita of countries in 2019.
+
+```{r}
+happiness <- read_csv("../../data/happiness_2019.csv")
+
+# Remove spaces from column names
+names(happiness) <- make.names(names(happiness))
+```
+
+(a) Create a scatterplot of GDP per capita (x) versus happiness index (y) and calculate the correlation between length and weight.  Comment on the strength and magnitude of the linear relationship, and whether a linear model would be appropriate for this data.
+
+(b) Calculate the slope and intercept of a least-squares linear regression model for GDP per capita versus happiness index.  Do this with the "by hand formulas" and check your work with R `lm()`.  Interpret the coefficients in context.
+
+(c) Validate the fit of your linear model by performing a residual analysis.  Create a graph of x versus residuals and comment on the three linear modeling assumptions.
+
+(d) Using your linear model, predict the happiness index for theoretical countries with 0.75, 1.25, and 2 GDP per capita.  You can just report point estimates and you do not have to build a CI or PI.  Which of these predictions would you consider to be the least reliable, and why?
+
+(e) What are the conclusions we can make about the relationship between GDP per capita and happiness index, based on the linear model?  Does money buy happiness?
+
+
+# Problem 2
+
+Consider predicting the happiness index of a country with 1 GDP per capita.
+
+(a) Build a *prediction interval* for the happiness index of a new country with $x^* = 1$ GDP per capita.  You can use the `predict()` function.
+
+(b) Build a *confidence interval* for the height of the regression line at $x^* = 1$.  You can use the `predict()` function.
+
+(c) Explain the difference in how the prediction and confidence intervals are calculated.
+
+
+# Problem 3
+
+Which of the following conditions lead to a smaller prediction error?  Briefly explain your chocies.
+
+- A smaller sample size vs a larger sample size
+
+- A smaller value of $\sigma$ vs a larger value of $\sigma$
+
+- Predicting closer to $\bar{x}$ vs predicting further from $\bar{x}$
+
+- A smaller variance vs a larger variance in the original $X$ data
+
+
+# Problem 4
+
+Continue working with the happiness index vs GDP of countries model. Build and interpret a 98% CI for the true slope of the linear relationship between happiness index and GDP.  Does the interval cover 0?
+
+
+# Problem 5
+
+(a) Perform a hypothesis test of hypotheses $$H_0: \beta_1 = 0 \quad \text{versus}\quad H_A: \beta_1 \neq 0$$ for the slope of the happiness model.  What is the test statistic, p-value, and conclusion at the 2% level?
+
+(b) How do the results of the hypothesis test in problem 3 relate to the results of the confidence interval in problem 2?
+
+
+# Problem 6
+
+A one-sided hypothesis test of 
+
+$$H_A: \beta_1 > 0$$
+
+is performed on a linear model.  The p-value of this test is 0.035.  What would be the p-value if the same data was used to test the following alternatives?
+
+(a) $$H_A: \beta_1 < 0$$
+
+(b) $$H_A: \beta_1 \neq 0$$
+
+
+# Problem 7
+
+26 measurements of outside low temperature (in C) and gas consumption (in 1000's of cubic feet) are taken for a house in England.  A linear model was fit to relate gas consumption to outside temperature.  Use the coefficient table of the lm summary output given in `hw11p7.png` to answer the following questions.
+
+(a) Complete a test at the 5% level to determine whether the slope of the linear relationship between gas consumption and temperature is *less than* -0.3.  Include hypotheses, test statistic, p-value, and a conclusion.
+
+(b) The 11th point in the data has a residual value of 0.17.  Does the linear model overestimate or underestimate the gas consumption on that day?
+
+(c) The outside low temperature on the day when the 11th point of data was recorded was 5.4 degrees C.  How much gas was actually consumed on this day?
+
+(d) We know that the standard deviation of the temperature measurements are larger than the standard deviation of the gas consumption measurements.  Which of the four statements is true about the correlation between temperature and gas consumption, and why?
+
+- The correlation is between -1 and -0.393.
+- The correlation is between -0.393 and 0.
+- The correlation is between 0 and 0.393.
+- The correlation is between 0.393 and 1.
+
+
+# Problem 8
+
+Temperature affects the rate of chemical reactions.  A study investigated the effect of temperature (in Celsius) on the rate of reaction ($\mu mol$ per min) of the enzyme acid phosphatase.  The data is given below.
+
+```{r}
+phosphatase <- tibble(
+  temp = c(3.3, 7.6, 13.8, 21.7, 29.2, 34.4, 37.1,
+           39.8, 45.8, 52.5, 59.8, 66.7, 74.6),
+  rate = c(0.021, 0.038, 0.057, 0.085, 0.121, 0.166,
+           0.227, 0.277, 0.331, 0.357, 0.373, 0.367, 0.380)
+)
+```
+
+(a) Build a scatterplot of the data with x = temp and y = rate.  Use R to fit a least-squares linear regression model and create a residual plot.  Based on these plots, which of the linear modeling assumptions may not be satisfied?
+
+(b) Perform a simulation experiment with $\alpha = 0.01$ to determine whether temperature is correlated with reaction rate for this chemical reaction.  State hypotheses, observed correlation, p-value and conclusions.  Use Spearman's rank-based correlation with `cor(x, y, method = "spearman")`.
+
+(c) Explain why a measure based on the ranks of the data (1st, 2nd, 3rd, etc) is preferable in this case to Pearson's correlation which is the basis of a linear model.  How does the type of correlation we use affect the conclusions we can make from the simulation study?
+
+
+
