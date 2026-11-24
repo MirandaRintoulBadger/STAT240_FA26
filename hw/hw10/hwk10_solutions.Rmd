@@ -1,0 +1,342 @@
+---
+title: "Homework 10"
+author: "Solutions"
+output: html_document
+---
+
+```{css, echo = F}
+.rsoln {
+background-color: #E6E6FA;
+}
+
+.soln {
+color: #5858d0;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE,
+                      fig.height = 3)
+library(tidyverse)
+```
+
+```{r, echo=F}
+old <- theme_get()
+
+theme_set(theme(panel.background = element_rect(fill = "#ededfb")))
+```
+
+
+# Preliminaries
+
+- This file should be in `STAT240/homework/hw10` on your local computer.
+- Download `parental_leave.csv` to `STAT240/data`.
+
+
+# Problem 1
+
+The file `parental_leave.csv` contains information on crowdsourced parental leave data (in weeks) for 1601 different companies.  
+
+```{r}
+leave <- read_csv("../../data/parental_leave.csv")
+
+# Remove spaces from column names
+names(leave) <- make.names(names(leave))
+
+# Tidy numeric columns
+leave <- leave %>%
+  mutate_at(vars(Paid.Maternity.Leave, Unpaid.Maternity.Leave,
+                 Paid.Paternity.Leave, Unpaid.Paternity.Leave),
+            as.numeric) %>%
+  replace(is.na(.), 0)
+```
+
+(a) Mutate a column for total paid leave by adding the weeks of paid maternity and paternity leave. Optionally, give the columns shorter names that are easier to reference.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave <- leave %>%
+  rename(mat_paid = Paid.Maternity.Leave,
+         pat_paid = Paid.Paternity.Leave,
+         mat_unpaid = Unpaid.Maternity.Leave,
+         pat_unpaid = Unpaid.Paternity.Leave) %>%
+  mutate(total_paid = mat_paid + pat_paid)
+```
+
+(b) Filter the data to only include the "Educational Services: College & Universities" industry.  Create a histogram of total paid leave and comment on its shape.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave %>%
+  filter(Industry == "Educational Services: College & Universities") %>%
+  ggplot(aes(x = total_paid)) +
+  geom_histogram()
+```
+
+[The histogram is right-skewed, with one very prominent outlier.]{.soln}
+
+(c) Comment on why a T test for the mean might still be an appropriate method, even though the total paid leave data does not look normal.
+
+[The T test for the mean is based on the CLT, which says that the sample mean will be approximately normal for large enough n.  We have 52 observations, which is probably large enough to account for the fact that our underlying population is very skewed.]{.soln}
+
+
+# Problem 2
+
+Build a 98% T CI for the average total weeks of paid leave of companies in "Educational Services: College & Universities", and interpret the results. You must do this by hand, but you can check your results with `t.test()`.
+
+(a) First, calculate and save the summary values.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave_escu <- leave %>%
+  filter(Industry == "Educational Services: College & Universities") %>%
+  summarize(avg_leave = mean(total_paid), sd_leave = sd(total_paid), n = n())
+
+xbar <- leave_escu$avg_leave
+s <- leave_escu$sd_leave
+n <- leave_escu$n
+```
+
+(b) Calculate the point estimate and standard error from the data.  Find a T critical value with $n - 1$ degrees of freedom based on $\alpha = 0.02$ and use this to construct the CI.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pt_est <- xbar
+se <- s/sqrt(n)
+
+cv <- qt(0.99, df = n-1)
+
+c(pt_est - cv*se, pt_est + cv*se)
+```
+
+[We are 98% confident that the true average total paid leave (for the College & Universities industry) is within (6.824, 11.964).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+obs_escu <- leave %>%
+  filter(Industry == "Educational Services: College & Universities")
+
+t.test(obs_escu$total_paid, conf.level = 0.98)
+```
+
+
+# Problem 3
+
+Perform a test at the 2% level to determine whether the "Educational Services: College & Universities" average total paid leave is *greater than* 10 weeks.  State hypotheses, report a test statistic and p-value. You must do this by hand, but you can check your results with `t.test()`.
+
+[Our hypotheses need to reflect that we are looking for a value greater than 10, not just different from 10.  Let $\mu$ refer to the true average total paid leave for this industry.  We have:
+$$H_0: \mu \le 10 \quad \text{versus}\quad H_A: \mu > 10$$]{.soln}
+
+[Next, we calculate a test statistic to compare our observed mean to the value 10.  We calculate a p-value on the T with $n - 1$ degrees of freedom by looking at the area above our test statistic (since we have a "greater than" alternative).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+test_stat <- (xbar - 10) / (s / sqrt(n))
+
+test_stat
+
+pt(test_stat, df = n-1, lower.tail = F)
+```
+
+[We have a negative test statistic -0.566, since our observed mean is actually less than 10.  This results in a very large p-value of 0.713.  We fail to reject $H_0$ and we do not have evidence that the mean total paid leave is greater than 10 hours.  We can confirm this with `t.test`.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+t.test(obs_leave, mu = 10, alternative = "greater")
+```
+
+
+# Problem 4
+
+Continuing with the parental leave data, sonsider comparing companies in "Educational Services: College & Universities" (ESCU) to companies in "Healthcare: Hospitals & Clinics" (HHC).
+
+(a) Make side-by-side boxplots comparing the parental leave in ESCU companies to HHC companies. Also create and print a table summarizing the mean, standard deviation, and sample size for both groups.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave %>% 
+  filter(Industry %in% c("Educational Services: College & Universities",
+                         "Healthcare: Hospitals & Clinics")) %>% 
+  ggplot(aes(x = total_paid, y = Industry)) +
+  geom_boxplot() +
+  scale_y_discrete(labels = c("ESCU", "HHC"))
+```
+
+```{r, class.source="rsoln", class.output="rsoln"}
+escu_vs_hhc <- leave %>% 
+  filter(Industry %in% c("Educational Services: College & Universities",
+                         "Healthcare: Hospitals & Clinics")) %>% 
+  group_by(Industry) %>% 
+  summarize(avg_leave = mean(total_paid), sd_leave = sd(total_paid), n = n())
+
+xbar1 <- escu_vs_hhc$avg_leave[1]
+xbar2 <- escu_vs_hhc$avg_leave[2]
+s1 <- escu_vs_hhc$sd_leave[1]
+s2 <- escu_vs_hhc$sd_leave[2]
+n1 <- escu_vs_hhc$n[1]
+n2 <- escu_vs_hhc$n[2]
+```
+
+(b) Assess the assumptions of a T test by looking at histograms of each group.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave %>% 
+  filter(Industry == "Educational Services: College & Universities") %>% 
+  ggplot(aes(x = total_paid)) +
+  geom_histogram()
+
+leave %>% 
+  filter(Industry == "Healthcare: Hospitals & Clinics") %>% 
+  ggplot(aes(x = total_paid)) +
+  geom_histogram()
+```
+
+[The histograms of the data groups are not quite normal, but there is a large enough sample size for both groups that we can probably still comfortably apply the CLT and use a T test.]{.soln}
+
+(c) Assess the equal variances assumption for these two groups of data by comparing the ratio of standard deviations.  Even if the standard deviations are similar "enough", why might we want to not assume equal variances?
+
+[To safely assume equal variances, we want the sample SDs to be within a factor of two, which is technically true for this set of data.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+s1 / s2
+```
+
+[In any case we are not required to assume equal variances, since the Welch T test is more general than the equal variances T test.  We might want to play it safe and not assume the variances are the same.  If the variances are not actually equal, then the equal-variances test might give us inaccurate results.]{.soln}
+
+
+# Problem 5
+
+Assuming unequal variances, build a 95% CI for the difference in average total weeks of paid leave between the ESCU and HHC industries and interpret the results. You must do this by hand, but you can check your results with `t.test()`.
+
+```{r, class.source="rsoln", class.output="rsoln"}
+escu_vs_hhc <- leave %>% 
+  filter(Industry %in% c("Educational Services: College & Universities",
+                         "Healthcare: Hospitals & Clinics")) %>% 
+  group_by(Industry) %>% 
+  summarize(avg_leave = mean(total_paid), sd_leave = sd(total_paid), n = n())
+
+xbar1 <- escu_vs_hhc$avg_leave[1]
+xbar2 <- escu_vs_hhc$avg_leave[2]
+s1 <- escu_vs_hhc$sd_leave[1]
+s2 <- escu_vs_hhc$sd_leave[2]
+n1 <- escu_vs_hhc$n[1]
+n2 <- escu_vs_hhc$n[2]
+```
+
+[After gathering data summaries, we need to calculate the approximate degrees of freedom to use for our T reference distribution.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+w_numer <- (s1^2/n1 + s2^2/n2)^2
+w_denom <- (s1^4/(n1^2*(n1-1)) + s2^4/(n2^2*(n2-1)))
+
+w <- w_numer / w_denom
+```
+
+[Now, we can find all of the components of our CI.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+pt_est <- xbar1 - xbar2
+se <- sqrt(s1^2/n1 + s2^2/n2)
+
+cv <- qt(0.975, df = w)
+
+c(pt_est - cv*se, pt_est + cv*se)
+```
+
+[We are 95% confident that the true difference between average ESCU and HHC paid leave is within (1.509, 6.7).]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+obs_escu <- leave %>%
+  filter(Industry == "Educational Services: College & Universities")
+
+obs_hhc <- leave %>%
+  filter(Industry == "Healthcare: Hospitals & Clinics")
+
+t.test(obs_escu$total_paid, obs_hhc$total_paid)
+```
+
+
+# Problem 6
+
+Does the educational industry give a different amount of average paid leave than the healthcare industry?  Perform a hypothesis test of 
+$$H_0: \mu_{ESCU} - \mu_{HHC} = 0 \quad \text{versus}\quad H_A: \mu_{ESCU} - \mu_{HHC} \neq 0$$
+with $\alpha = 0.05$, assuming unequal variances.  You must do this by hand, but you can check your results with `t.test()`.
+
+[Our test statistic is based on the difference in the observed means, and the null distribution is a T with $w$ degrees of freedom (found in problem 1). Our two-sided p-value is 2 times the area above our test statistic.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+se <- sqrt(s1^2/n1 + s2^2/n2)
+
+test_stat <- ((xbar1 - xbar2) - 0)/se
+
+test_stat
+
+2*pt(test_stat, df = w, lower.tail = F)
+```
+
+[We get a very small p-value of 0.003, which is less than $\alpha = 0.05$.  We have evidence that the educational industry and healthcare industry offer different amounts of paid leave, on average.  We get the same result with `t.test()`.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+t.test(obs_escu$total_paid, obs_hhc$total_paid)
+```
+
+
+# Problem 7
+
+Repeat the by-hand test in problem 6, but instead write hypotheses for $\mu_{HHC} - \mu_{ESCU}$ (the order of subtraction is switched).  Show that you get identical results to problem 6.
+
+[We have two-sided hypotheses:
+$$H_0: \mu_{HHC} - \mu_{ESCU} = 0 \quad \text{versus} \quad H_A: \mu_{HHC} - \mu_{ESCU} \neq 0$$]{.soln}
+
+[Our test statistic has the reverse order of subtraction, which gives us the same test statistic as in problem 2, but with the opposite sign.  Now, we calculate a p-value by looking at 2 times the area below our test statistic.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+test_stat <- ((xbar2 - xbar1) - 0)/se
+
+test_stat
+
+2*pt(test_stat, df = w)
+```
+
+[We get an identical p-value of 0.003.]{.soln}
+
+
+# Problem 8
+
+Now, consider the "Technology: Software" industry.  Perform the appropriate hypothesis test to determine whether there is a difference in weeks of paid maternity and paternity leave within this industry.  You must do this by hand, but you can check your results with `t.test()`.  Make sure to state your test assumptions as well.
+
+[Because maternity and paternity leave are both decided within a company, we have paired data, and we should perform our analysis at the "company level".  First, calculate the difference in maternity - paternity paid leave for each software company.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave_differences <- leave %>%
+  filter(Industry == "Technology: Software") %>%
+  mutate(diffs = mat_paid - pat_paid)
+```
+
+[Now, we need to perform a one-sample T test.  Our hypotheses are
+$$H_0: \mu_{diff} = 0 \quad \text{versus} \quad H_A: \mu_{diff} \neq 0$$]{.soln}
+
+[For a paired T test to work, we need to assume that the differences are independent and approximately normal.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+leave_differences %>%
+  ggplot(aes(x = diffs)) +
+  geom_histogram()
+```
+
+[The histogram is somewhat skewed, but we have a large enough sample for the CLT to apply.]{.soln}
+
+[Let's gather the summaries of the differences and calculate a test statistic and two-sided p-value.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+xbar <- mean(leave_differences$diffs)
+s <- sd(leave_differences$diffs)
+n <- length(leave_differences$diffs)
+
+test_stat <- (xbar - 0) / (s / sqrt(n))
+
+test_stat
+
+2*pt(test_stat, df = n-1, lower.tail = F)
+```
+
+[We have an extremely small p-value, which corresponds to very strong evidence against the null.  We have evidence of a difference in the amount of paid maternity and paternity leave offered in the software industry.]{.soln}
+
+```{r, class.source="rsoln", class.output="rsoln"}
+t.test(leave_differences$diffs)
+```
+
+
